@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BuscaTeto - Frontend Básico</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    header { margin-bottom: 20px; }
+    .card { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 8px; }
+    label { display:block; margin-top:8px; }
+    input, select { padding:6px; width:100%; max-width:320px; }
+    button { margin-top: 8px; padding:8px 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BuscaTeto</h1>
+    <p>Frontend simples para visualizar a API de imóveis.</p>
+  </header>
+
+  <section>
+    <h2>Buscar imóveis</h2>
+    <div>
+      <label>Cidade <input id="cidade"/></label>
+      <label>Preço mínimo <input id="precoMin" type="number"/></label>
+      <label>Preço máximo <input id="precoMax" type="number"/></label>
+      <label>Quartos mínimos <input id="quartosMin" type="number"/></label>
+      <button id="btnBuscar">Buscar</button>
+    </div>
+
+    <h3>Resultados</h3>
+    <div id="resultados"></div>
+  </section>
+
+  <section>
+    <h2>Criar imóvel</h2>
+    <div>
+      <label>Título <input id="novoTitulo"/></label>
+      <label>Descrição <input id="novoDescricao"/></label>
+      <label>Cidade <input id="novoCidade"/></label>
+      <label>Preço <input id="novoPreco" type="number"/></label>
+      <label>Quartos <input id="novoQuartos" type="number"/></label>
+      <button id="btnCriar">Criar</button>
+    </div>
+  </section>
+
+  <script>
+    const resultadosDiv = document.getElementById('resultados');
+
+    async function buscar() {
+      const cidade = document.getElementById('cidade').value;
+      const precoMin = document.getElementById('precoMin').value;
+      const precoMax = document.getElementById('precoMax').value;
+      const quartosMin = document.getElementById('quartosMin').value;
+
+      const params = new URLSearchParams();
+      if (cidade) params.append('cidade', cidade);
+      if (precoMin) params.append('precoMin', precoMin);
+      if (precoMax) params.append('precoMax', precoMax);
+      if (quartosMin) params.append('quartosMin', quartosMin);
+
+      const res = await fetch('/imoveis?' + params.toString());
+      const data = await res.json();
+      mostrarResultados(data);
+    }
+
+    function mostrarResultados(items) {
+      resultadosDiv.innerHTML = '';
+      if (!items || items.length === 0) {
+        resultadosDiv.innerHTML = '<p>Nenhum imóvel encontrado.</p>';
+        return;
+      }
+
+      items.forEach(i => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `<strong>${i.titulo}</strong> — ${i.cidade} — R$ ${i.preco.toLocaleString()}<br/>${i.descricao || ''}<br/><button data-id="${i.id}" class="btnExcluir">Excluir</button>`;
+        resultadosDiv.appendChild(div);
+      });
+
+      document.querySelectorAll('.btnExcluir').forEach(b => {
+        b.addEventListener('click', async (ev) => {
+          const id = ev.target.getAttribute('data-id');
+          await fetch('/imoveis/' + id, { method: 'DELETE' });
+          buscar();
+        });
+      });
+    }
+
+    document.getElementById('btnBuscar').addEventListener('click', buscar);
+
+    document.getElementById('btnCriar').addEventListener('click', async () => {
+      const payload = {
+        titulo: document.getElementById('novoTitulo').value,
+        descricao: document.getElementById('novoDescricao').value,
+        cidade: document.getElementById('novoCidade').value,
+        preco: Number(document.getElementById('novoPreco').value),
+        quartos: Number(document.getElementById('novoQuartos').value),
+      };
+      await fetch('/imoveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      // Limpa campos
+      document.getElementById('novoTitulo').value = '';
+      document.getElementById('novoDescricao').value = '';
+      document.getElementById('novoCidade').value = '';
+      document.getElementById('novoPreco').value = '';
+      document.getElementById('novoQuartos').value = '';
+      buscar();
+    });
+
+    // Carrega lista inicial
+    buscar();
+  </script>
+</body>
+</html>

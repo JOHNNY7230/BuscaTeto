@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bases do projeto BuscaTeto</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; max-width: 800px; }
+    h1,h2,h3 { color:#333 }
+    pre{ background:#f8f8f8; padding:12px; border-radius:6px; overflow:auto }
+    code{ background:#f0f0f0; padding:2px 4px; border-radius:4px }
+  </style>
+</head>
+<body>
+  <h1>Bases do projeto BuscaTeto</h1>
+
+  <p>Este documento resume as bases técnicas do backend e frontend simples que foram implementados no projeto BuscaTeto.</p>
+
+  <h2>Objetivo</h2>
+  <p>Criar um back-end mínimo para listar, buscar, criar e (inicialmente) remover imóveis, junto com um frontend básico para visualização.</p>
+
+  <h2>Arquitetura</h2>
+  <ul>
+    <li>Aplicação ASP.NET Core Minimal API (.NET 10) — entradas definidas diretamente em <code>Program.cs</code> usando <code>app.MapGet/MapPost/...</code>.</li>
+    <li>Repositório em memória (<code>InMemoryPropertyRepository</code>) para facilidade de desenvolvimento e testes.</li>
+    <li>Frontend estático (HTML + JS) servido pela pasta <code>wwwroot</code>.</li>
+  </ul>
+
+  <h2>Endpoints principais</h2>
+  <ul>
+    <li><code>GET /imoveis</code> — lista e filtra por <code>cidade</code>, <code>precoMin</code>, <code>precoMax</code>, <code>quartosMin</code>.</li>
+    <li><code>GET /imoveis/{id}</code> — obtém detalhes de um imóvel.</li>
+    <li><code>POST /imoveis</code> — cria um novo imóvel (aceita JSON com campos como <code>titulo</code>, <code>descricao</code>, <code>cidade</code>, <code>preco</code>, <code>quartos</code>, <code>imagem</code>).</li>
+    <li><code>PUT /imoveis/{id}</code> — atualiza um imóvel existente.</li>
+    <li>A rota <code>DELETE /imoveis/{id}</code> foi removida por segurança / pedido.</li>
+  </ul>
+
+  <h2>Modelos (resumido)</h2>
+  <ul>
+    <li><code>Imovel</code> (model): <code>Id</code>, <code>Titulo</code>, <code>Descricao</code>, <code>Cidade</code>, <code>Preco</code>, <code>Quartos</code>, <code>Imagem</code>, <code>CriadoEm</code>.</li>
+    <li><code>CriarImovelRequest</code>: campos para criar (inclui <code>Imagem</code> como URL).</li>
+    <li><code>AtualizarImovelRequest</code>: campos opcionais para atualização.</li>
+  </ul>
+
+  <h2>Repositório</h2>
+  <ul>
+    <li>Interface <code>IRepositorioImovel</code> com métodos em português (<code>Obter</code>, <code>Criar</code>, <code>Atualizar</code>, <code>Remover</code>, <code>Buscar</code>).</li>
+    <li>Implementação <code>InMemoryPropertyRepository</code> usa <code>ConcurrentDictionary&lt;Guid, Imovel&gt;</code> e contém dados de seed com URLs de imagens públicas.</li>
+    <li>Vantagem: simplicidade e zero dependências externas. Desvantagem: dados não persistem entre execuções.</li>
+  </ul>
+
+  <h2>Frontend</h2>
+  <p><code>wwwroot/index.html</code> fornece uma UI mínima para:</p>
+  <ul>
+    <li>Buscar e filtrar imóveis.</li>
+    <li>Criar novos imóveis (a imagem é fornecida por URL).</li>
+    <li>Originalmente havia botão de exclusão; a rota DELETE foi removida do backend, mas o frontend ainda continha o botão — pode ser atualizado ou removido.</li>
+  </ul>
+
+  <h2>Como rodar</h2>
+  <ol>
+    <li>No diretório do projeto (<code>BuscaTeto</code>), executar: <pre>dotnet run</pre></li>
+    <li>Abrir no navegador a URL informada pelo <code>dotnet run</code> (por padrão <code>http://localhost:5000</code>).</li>
+  </ol>
+
+  <h2>Segurança e produção</h2>
+  <p>Atualmente não há autenticação, autorização, validação forte nem proteção contra CSRF.</p>
+  <p>Para produção, recomenda-se:</p>
+  <ul>
+    <li>Adicionar autenticação (JWT, Identity) e autorizar rotas sensíveis.</li>
+    <li>Validar e sanitizar entradas no servidor (DataAnnotations / FluentValidation).</li>
+    <li>Utilizar HTTPS e políticas CORS apropriadas.</li>
+    <li>Registrar e monitorar (logs, métricas).</li>
+  </ul>
+
+  <h2>Persistência e escopo futuro</h2>
+  <ul>
+    <li>Trocar o repositório em memória por uma camada persistente (EF Core com SQLite, PostgreSQL, etc.).</li>
+    <li>Adicionar paginação nos endpoints de listagem.</li>
+    <li>Reabilitar upload de imagens (armazenar em blob storage / filesystem) ou continuar usando URLs externas.</li>
+  </ul>
+
+  <h2>Exportar para PDF</h2>
+  <p>Para criar um PDF a partir deste arquivo HTML:</p>
+  <ol>
+    <li>Abrir <code>Docs/Bases-BuscaTeto.html</code> no navegador.</li>
+    <li>Usar a opção <em>Imprimir</em> e escolher <em>Salvar como PDF</em> (ou <em>Microsoft Print to PDF</em>).</li>
+  </ol>
+
+  <p>Se preferir uma conversão automática via linha de comando, instale <code>pandoc</code> ou <code>wkhtmltopdf</code> e execute os comandos adequados.</p>
+
+  <hr/>
+  <p>Documento gerado automaticamente para facilitar a exportação/compartilhamento.</p>
+</body>
+</html>
