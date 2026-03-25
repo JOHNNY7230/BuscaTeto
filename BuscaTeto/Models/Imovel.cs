@@ -19,7 +19,7 @@ namespace BuscaTeto.Models
         [Required]
         public TipoImovel Tipo { get; set; }
 
-        // Valores (Usamos decimal para evitar erros de arredondamento com dinheiro)
+        // Valores (Usamos decimal para evitar erros de arredondamento com dinheiro) - Tales 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal ValorAluguel { get; set; }
