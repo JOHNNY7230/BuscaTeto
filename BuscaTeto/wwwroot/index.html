@@ -1,115 +1,61 @@
-<!doctype html>
-<html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BuscaTeto - Frontend Básico</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    header { margin-bottom: 20px; }
-    .card { border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 8px; }
-    label { display:block; margin-top:8px; }
-    input, select { padding:6px; width:100%; max-width:320px; }
-    button { margin-top: 8px; padding:8px 12px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuscaTeto | Acesse sua Conta</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login.css">
 </head>
 <body>
-  <header>
-    <h1>BuscaTeto</h1>
-    <p>Frontend simples para visualizar a API de imóveiss.</p>
-  </header>
 
-  <section>
-    <h2>Buscar imóveis</h2>
-    <div>
-      <label>Cidade <input id="cidade"/></label>
-      <label>Preço mínimo <input id="precoMin" type="number"/></label>
-      <label>Preço máximo <input id="precoMax" type="number"/></label>
-      <label>Quartos mínimos <input id="quartosMin" type="number"/></label>
-      <button id="btnBuscar">Buscar</button>
-    </div>
+    <main class="login-container">
+        <div class="login-sidebar">
+            <div class="sidebar-content">
+                <div class="brand-logo white">🏠 Busca<span>Teto</span></div>
+                <h1>Encontre o seu próximo lar, sem complicações.</h1>
+                <p>Milhares de opções exclusivas esperam por você.</p>
+            </div>
+        </div>
 
-    <h3>Resultados</h3>
-    <div id="resultados"></div>
-  </section>
+        <div class="login-form-wrapper">
+            <div class="login-card-glass">
+                <h2>Bem-vindo de volta</h2>
+                <p>Acesse sua conta para continuar sua busca.</p>
 
-  <section>
-    <h2>Criar imóvel</h2>
-    <div>
-      <label>Título <input id="novoTitulo"/></label>
-      <label>Descrição <input id="novoDescricao"/></label>
-      <label>Cidade <input id="novoCidade"/></label>
-      <label>Preço <input id="novoPreco" type="number"/></label>
-      <label>Quartos <input id="novoQuartos" type="number"/></label>
-      <button id="btnCriar">Criar</button>
-    </div>
-  </section>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="user-email">Seu e-mail</label>
+                        <div class="input-with-icon">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><path d="m22 6-10 7L2 6" /></svg>
+                            <input type="email" id="user-email" placeholder="exemplo@email.com" required>
+                        </div>
+                    </div>
 
-  <script>
-    const resultadosDiv = document.getElementById('resultados');
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label for="user-pass">Sua senha</label>
+                            <a href="#" class="forgot-pass">Esqueceu a senha?</a>
+                        </div>
+                        <div class="input-with-icon">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2z" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                            <input type="password" id="user-pass" placeholder="••••••••" required>
+                        </div>
+                    </div>
 
-    async function buscar() {
-      const cidade = document.getElementById('cidade').value;
-      const precoMin = document.getElementById('precoMin').value;
-      const precoMax = document.getElementById('precoMax').value;
-      const quartosMin = document.getElementById('quartosMin').value;
+                    <button type="submit" class="btn-primary-animated">
+                        <span>Acessar Plataforma</span>
+                        <svg class="icon-btn" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+                    </button>
+                </form>
 
-      const params = new URLSearchParams();
-      if (cidade) params.append('cidade', cidade);
-      if (precoMin) params.append('precoMin', precoMin);
-      if (precoMax) params.append('precoMax', precoMax);
-      if (quartosMin) params.append('quartosMin', quartosMin);
+                <div class="card-footer">
+                    Não tem uma conta? <a href="#">Cadastre-se grátis</a>
+                </div>
+            </div>
+        </div>
+    </main>
 
-      const res = await fetch('/imoveis?' + params.toString());
-      const data = await res.json();
-      mostrarResultados(data);
-    }
-
-    function mostrarResultados(items) {
-      resultadosDiv.innerHTML = '';
-      if (!items || items.length === 0) {
-        resultadosDiv.innerHTML = '<p>Nenhum imóvel encontrado.</p>';
-        return;
-      }
-
-      items.forEach(i => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `<strong>${i.titulo}</strong> — ${i.cidade} — R$ ${i.preco.toLocaleString()}<br/>${i.descricao || ''}<br/><button data-id="${i.id}" class="btnExcluir">Excluir</button>`;
-        resultadosDiv.appendChild(div);
-      });
-
-      document.querySelectorAll('.btnExcluir').forEach(b => {
-        b.addEventListener('click', async (ev) => {
-          const id = ev.target.getAttribute('data-id');
-          await fetch('/imoveis/' + id, { method: 'DELETE' });
-          buscar();
-        });
-      });
-    }
-
-    document.getElementById('btnBuscar').addEventListener('click', buscar);
-
-    document.getElementById('btnCriar').addEventListener('click', async () => {
-      const payload = {
-        titulo: document.getElementById('novoTitulo').value,
-        descricao: document.getElementById('novoDescricao').value,
-        cidade: document.getElementById('novoCidade').value,
-        preco: Number(document.getElementById('novoPreco').value),
-        quartos: Number(document.getElementById('novoQuartos').value),
-      };
-      await fetch('/imoveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      // Limpa campos
-      document.getElementById('novoTitulo').value = '';
-      document.getElementById('novoDescricao').value = '';
-      document.getElementById('novoCidade').value = '';
-      document.getElementById('novoPreco').value = '';
-      document.getElementById('novoQuartos').value = '';
-      buscar();
-    });
-
-    // Carrega lista inicial
-    buscar();
-  </script>
+    <script src="login.js"></script>
 </body>
 </html>

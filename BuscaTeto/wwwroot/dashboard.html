@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuscaTeto | Explorar</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">🏠 Busca<span>Teto</span></div>
+
+            <div class="search-pill">
+                <input type="text" id="search-input" placeholder="Onde você quer morar?" onkeyup="filterProperties()">
+                <button class="btn-search-icon">🔍</button>
+            </div>
+
+            <div class="nav-user">
+                <button class="btn-add" onclick="openModal()">Anunciar Imóvel</button>
+                <button class="btn-logout" onclick="window.location.href='index.html'">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="content-header">
+            <div class="filter-chips">
+                <button class="chip active" onclick="filterByType('')">Todos</button>
+                <button class="chip" onclick="filterByType('Apartamento')">Apartamentos</button>
+                <button class="chip" onclick="filterByType('Casa')">Casas</button>
+                <button class="chip" onclick="filterByType('Studio')">Studios</button>
+            </div>
+            <p id="counter">Buscando imóveis...</p>
+        </div>
+
+        <div class="property-grid" id="property-list">
+        </div>
+    </main>
+
+    <div id="modal-add" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Cadastrar novo imóvel</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="add-form">
+                <div class="input-group">
+                    <label>Título do anúncio</label>
+                    <input type="text" id="title" placeholder="Ex: Apartamento com vista livre" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Foto do Imóvel</label>
+                    <input type="file" id="img-file" accept="image/*" required>
+                    <small style="color: var(--gray); font-size: 0.75rem;">Selecione uma foto do seu dispositivo.</small>
+                </div>
+
+                <div class="input-group">
+                    <label>Endereço</label>
+                    <input type="text" id="address" placeholder="Rua, Bairro, Cidade" required>
+                </div>
+
+                <div class="row">
+                    <div class="input-group">
+                        <label>Preço mensal</label>
+                        <input type="number" id="price" placeholder="R$ 0,00" required>
+                    </div>
+                    <div class="input-group">
+                        <label>WhatsApp (com DDD)</label>
+                        <input type="number" id="phone" placeholder="11999999999" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-group">
+                        <label>Tipo</label>
+                        <select id="type">
+                            <option value="Apartamento">Apartamento</option>
+                            <option value="Casa">Casa</option>
+                            <option value="Studio">Studio</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Características</label>
+                        <input type="text" id="details" placeholder="Ex: 2 quartos, 65m²">
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Publicar no BuscaTeto</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

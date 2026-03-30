@@ -1,0 +1,315 @@
+/* login.css - Específico para a tela de login moderna */
+
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-soft: #eff6ff;
+    --dark: #0f172a;
+    --gray-dark: #334155;
+    --gray: #64748b;
+    --gray-light: #e2e8f0;
+    --light: #f8fafc;
+    --white: #ffffff;
+    --radius-lg: 24px;
+    --radius-md: 12px;
+    --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    --transition: all 0.3s ease;
+}
+
+/* RESET E BÁSICO */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--light);
+    color: var(--dark);
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* CONTAINER PRINCIPAL EM DUAS COLUNAS */
+.login-container {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    height: 100vh;
+    width: 100%;
+}
+
+/* COLUNA 1: SIDEBAR COM IMAGEM */
+.login-sidebar {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1000') no-repeat center center;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    color: var(--white);
+    animation: fadeScale 0.8s ease-out;
+}
+
+.sidebar-content {
+    max-width: 480px;
+    text-align: center;
+}
+
+    .sidebar-content h1 {
+        font-size: 2.8rem;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -1.5px;
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar-content p {
+        font-size: 1.1rem;
+        color: rgba(255,255,255,0.8);
+        font-weight: 400;
+    }
+
+/* BRANDING DENTRO DA SIDEBAR */
+.brand-logo.white {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -1.5px;
+    margin-bottom: 3rem;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .brand-logo.white span {
+        color: rgba(255,255,255,0.6);
+    }
+
+/* COLUNA 2: FORMULÁRIO */
+.login-form-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: var(--white);
+    position: relative;
+}
+
+/* EFEITO DE VIDRO NO CARD */
+.login-card-glass {
+    width: 100%;
+    max-width: 420px;
+    padding: 3rem;
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-xl);
+    animation: slideUp 0.6s ease-out 0.2s both;
+}
+
+    .login-card-glass h2 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--dark);
+        letter-spacing: -1px;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-card-glass > p {
+        color: var(--gray);
+        margin-bottom: 2.5rem;
+        font-size: 1rem;
+    }
+
+/* INPUTS COM ÍCONES E MICRO-INTERAÇÕES */
+.input-group {
+    margin-bottom: 1.5rem;
+    width: 100%;
+    text-align: left;
+}
+
+    .input-group label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--gray-dark);
+        margin-bottom: 8px;
+    }
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+    .input-with-icon .icon {
+        position: absolute;
+        left: 16px;
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: var(--gray);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: var(--transition);
+        pointer-events: none;
+    }
+
+    .input-with-icon input {
+        width: 100%;
+        padding: 14px 16px 14px 48px;
+        border: 2px solid var(--gray-light);
+        border-radius: var(--radius-md);
+        background: var(--light);
+        font-size: 1rem;
+        color: var(--dark);
+        transition: var(--transition);
+    }
+
+        /* Estado de foco do input */
+        .input-with-icon input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 4px var(--primary-soft);
+        }
+
+            /* Muda a cor do ícone quando o input tem foco */
+            .input-with-icon input:focus + .icon,
+            .input-with-icon input:not(:placeholder-shown) + .icon {
+                stroke: var(--primary);
+            }
+
+/* LINHA DE LEGENDAS (Esqueceu a senha) */
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.forgot-pass {
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+    .forgot-pass:hover {
+        text-decoration: underline;
+        color: var(--primary-hover);
+    }
+
+/* BOTÃO ANIMADO */
+.btn-primary-animated {
+    width: 100%;
+    padding: 16px;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn-primary-animated:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary-animated:active {
+        transform: translateY(0);
+    }
+
+.icon-btn {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.3s ease;
+}
+
+.btn-primary-animated:hover .icon-btn {
+    transform: translateX(4px);
+}
+
+/* FOOTER DO CARD */
+.card-footer {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: var(--gray);
+    text-align: center;
+}
+
+    .card-footer a {
+        color: var(--primary);
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--transition);
+    }
+
+        .card-footer a:hover {
+            text-decoration: underline;
+        }
+
+/* ANIMAÇÕES (KEYFRAMES) */
+@keyframes fadeScale {
+    0% {
+        opacity: 0;
+        transform: scale(1.1);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVIDADE (Para Celular) */
+@media (max-width: 900px) {
+    .login-container {
+        grid-template-columns: 1fr;
+    }
+
+    .login-sidebar {
+        display: none;
+    }
+    /* Esconde a sidebar no mobile */
+    .login-form-wrapper {
+        padding: 1rem;
+        background-color: var(--light);
+    }
+
+    .login-card-glass {
+        padding: 2rem;
+    }
+}
