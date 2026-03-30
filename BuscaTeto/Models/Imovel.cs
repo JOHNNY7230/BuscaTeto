@@ -1,12 +1,16 @@
-﻿namespace BuscaTeto.Models
+using System;
+
+namespace BuscaTeto.Models
 {
     public class Imovel
     {
-        public int Id { get; set; }
-        public string Titulo { get; set; }
-        public string Descricao { get; set; }
-        public decimal ValorAluguel { get; set; }
-        public int QuantidadeQuartos { get; set; }
-        public string Cidade { get; set; }
+        public Guid Id { get; set; }
+        public string Titulo { get; set; } = string.Empty;
+        public string? Descricao { get; set; }
+        public string Cidade { get; set; } = string.Empty;
+        public decimal Preco { get; set; }
+        public int Quartos { get; set; }
+        public string? Imagem { get; set; }
+        public DateTime CriadoEm { get; set; }
     }
 }
