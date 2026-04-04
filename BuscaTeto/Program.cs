@@ -21,7 +21,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// 2. Ativar a interface visual do Swagger
+// 2. Ativar a interface visual do Swaggers
 app.UseSwagger();
 app.UseSwaggerUI();
 
