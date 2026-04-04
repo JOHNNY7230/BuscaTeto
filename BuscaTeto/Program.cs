@@ -21,11 +21,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
-// 2. Ativar a interface visual do Swaggerss
+// 2. Ativar a interface visual do Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Serve ficheiros estáticos em wwwroot
+// Serve ficheiros estáticos em wwwroots
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
