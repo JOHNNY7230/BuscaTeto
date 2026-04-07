@@ -1,108 +1,139 @@
-﻿body {
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-        background-color: #ffffff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    .container {
-        width: 100%;
-        max-width: 450px;
-    }
-
-    .form-header h1 {
-        font-size: 2rem;
-        color: #1a1d23;
-        margin-bottom: 8px;
-    }
-
-    .form-header p {
-        color: #6c757d;
-        margin-bottom: 32px;
-    }
-
-    .input-group {
-        margin-bottom: 20px;
-    }
-
-        .input-group label {
-            display: block;
-            font-weight: 600;
-            color: #1a1d23;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-    .input-field {
-        display: flex;
-        align-items: center;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 12px;
-        padding: 12px 16px;
-        transition: 0.3s;
-    }
-
-        .input-field:focus-within {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .input-field i {
-            color: #6c757d;
-            margin-right: 12px;
-        }
-
-        .input-field input {
-            border: none;
-            background: transparent;
-            outline: none;
-            width: 100%;
-            font-size: 1rem;
-            color: #333;
-        }
-
-    .btn-primary {
-        width: 100%;
-        background-color: #2563eb; /* Azul do seu botão */
-        color: white;
-        border: none;
-        padding: 16px;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-        margin-top: 10px;
-        transition: 0.3s;
-    }
-
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-        }
-
-    .footer-text {
-        text-align: center;
-        margin-top: 32px;
-        color: #6c757d;
-    }
-
-        .footer-text a {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 600;
-        }
+﻿:root {
+    --primary-color: #2563eb;
+    --text-main: #1a1d23;
+    --text-sub: #64748b;
+    --bg-input: #f8fafc;
+    --border-color: #e2e8f0;
+    --radius: 12px;
 }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.main-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+}
+
+.header {
+    margin-bottom: 32px;
+}
+
+    .header h1 {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-main);
+        letter-spacing: -0.5px;
+    }
+
+    .header p {
+        color: var(--text-sub);
+        margin-top: 8px;
+        font-size: 16px;
+    }
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .input-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 0 16px;
+    height: 54px;
+    transition: all 0.2s ease;
+}
+
+    .input-wrapper:focus-within {
+        border-color: var(--primary-color);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05);
+    }
+
+    .input-wrapper i {
+        width: 20px;
+        height: 20px;
+        color: var(--text-sub);
+        margin-right: 12px;
+    }
+
+    .input-wrapper input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 15px;
+        color: var(--text-main);
+    }
+
+.btn-submit {
+    margin-top: 10px;
+    height: 54px;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: filter 0.2s;
+}
+
+    .btn-submit:hover {
+        filter: brightness(1.1);
+    }
+
+.footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 15px;
+}
+
+    .footer span {
+        color: var(--text-sub);
+    }
+
+    .footer a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        margin-left: 4px;
+    }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }

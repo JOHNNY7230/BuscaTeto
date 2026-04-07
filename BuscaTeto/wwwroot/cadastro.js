@@ -1,38 +1,51 @@
-﻿document.getElementById('formCadastro').addEventListener('submit', async function (event) {
-    event.preventDefault(); // Impede a página de recarregar
+﻿document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('formCadastro');
+    const inputTelefone = document.getElementById('telefone');
 
-    // Capturando os valores dos campos
-    const nome = document.getElementById('nome').value;
-    const email = document.getElementById('email').value;
-    const telefone = document.getElementById('telefone').value;
-    const senha = document.getElementById('senha').value;
-
-    // Criando o objeto para enviar ao C#
-    const dadosUsuario = {
-        nome: nome,
-        email: email,
-        telefone: telefone,
-        senha: senha
+    const validarEmail = (email) => {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regex.test(email);
     };
 
-    try {
-        // Substitua 'api/usuarios/registrar' pela sua rota real do Controller C#
-        const response = await fetch('http://localhost:5000/api/usuarios/registrar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dadosUsuario)
-        });
+    // Máscara de Telefone
+    inputTelefone.addEventListener('input', (e) => {
+        let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+        e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+    });
 
-        if (response.ok) {
-            alert('Cadastro realizado com sucesso!');
-            window.location.href = 'login.html'; // Redireciona para o login
-        } else {
-            alert('Erro ao cadastrar. Verifique os dados.');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const usuario = {
+            nome: document.getElementById('nome').value,
+            email: document.getElementById('email').value,
+            telefone: inputTelefone.value,
+            senha: document.getElementById('senha').value
+        };
+
+        // Validações básicas antes de enviar
+        if (!validarEmail(usuario.email)) {
+            alert('E-mail inválido!');
+            return;
         }
-    } catch (error) {
-        console.error('Erro na conexão:', error);
-        alert('Erro ao conectar com o servidor.');
-    }
+
+        try {
+            const response = await fetch('https://localhost:7000/api/usuarios/cadastrar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(usuario)
+            });
+
+            if (response.ok) {
+                // Redireciona direto passando um "aviso" na URL
+                window.location.href = 'index.html?cadastrado=true';
+            } else {
+                const erroTexto = await response.text();
+                alert('Erro ao cadastrar: ' + erroTexto);
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão com o servidor.');
+        }
+    });
 });
