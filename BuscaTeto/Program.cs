@@ -25,7 +25,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Serve ficheiros estáticos em wwwroot
+// Serve ficheiros estáticos em wwwroots
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
