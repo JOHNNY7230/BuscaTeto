@@ -100,4 +100,51 @@ app.MapPut("/imoveis/{id}", async (AppDbContext db, Guid id, AtualizarImovelRequ
     await db.SaveChangesAsync(); // Atualiza fisicamente no SQL Server
     return Results.NoContent();
 });
+// Buscar todos os usuários
+app.MapGet("/usuarios", async (AppDbContext db) =>
+{
+    var usuarios = await db.Usuarios.ToListAsync();
+    return Results.Ok(usuarios);
+});
+
+// Buscar um único usuário pelo ID
+app.MapGet("/usuarios/{id}", async (AppDbContext db, Guid id) =>
+{
+    var usuario = await db.Usuarios.FindAsync(id);
+    return usuario is null ? Results.NotFound() : Results.Ok(usuario);
+});
+
+// Guardar um novo usuário na Base de Dados
+app.MapPost("/usuarios", async (AppDbContext db, CriarUsuarioRequest criar) =>
+{
+    var criado = new Usuario
+    {
+        Id = Guid.NewGuid(),
+        Nome = criar.Nome,
+        Email = criar.Email,
+        Senha = criar.Senha, // Dica de segurança: futuramente, adicione hash na senha
+        Telefone = criar.Telefone,
+        CriadoEm = DateTime.UtcNow
+    };
+
+    db.Usuarios.Add(criado);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/usuarios/{criado.Id}", criado);
+});
+
+// Atualizar um usuário existente
+app.MapPut("/usuarios/{id}", async (AppDbContext db, Guid id, AtualizarUsuarioRequest atualizar) =>
+{
+    var usuario = await db.Usuarios.FindAsync(id);
+    if (usuario is null) return Results.NotFound();
+
+    if (atualizar.Nome != null) usuario.Nome = atualizar.Nome;
+    if (atualizar.Email != null) usuario.Email = atualizar.Email;
+    if (atualizar.Senha != null) usuario.Senha = atualizar.Senha;
+    if (atualizar.Telefone != null) usuario.Telefone = atualizar.Telefone;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
 app.Run();
