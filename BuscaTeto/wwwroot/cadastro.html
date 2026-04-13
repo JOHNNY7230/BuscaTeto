@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuscaTeto | Criar Conta</title>
+    <link rel="stylesheet" href="cadastro.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <main class="main-container">
+        <section class="content-box">
+
+            <header class="header">
+                <h1>Crie sua conta</h1>
+                <p>Preencha os campos para acessar a plataforma.</p>
+            </header>
+
+            <form id="formCadastro" class="form">
+                <div class="input-group">
+                    <label>Nome completo</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="nome" placeholder="Seu nome" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Seu e-mail</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="email" placeholder="seuemail@exemplo.com" required>
+                    </div>
+                </div>
+
+            
+
+                <div class="input-group">
+                    <label>Sua senha</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="senha" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    Criar Conta <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+
+            <footer class="footer">
+                <span>Já tem uma conta?</span>
+                <a href="index.html">Faça login</a>
+            </footer>
+
+        </section>
+    </main>
+
+    <script>
+        // Inicializa os ícones do Lucide
+        lucide.createIcons();
+    </script>
+    <script src="cadastro.js"></script>
+</body>
+</html>

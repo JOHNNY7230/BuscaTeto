@@ -1,5 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Selecionamos o formulário de login
+
+    // --- PARTE 1: VERIFICAR SE O USUÁRIO ACABOU DE SE CADASTRAR ---
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get('cadastrado') === 'true') {
+        // Exibe o alerta de sucesso
+        alert("Conta criada com sucesso no BuscaTeto! Faça seu login agora.");
+
+        // Limpa o "?cadastrado=true" da barra de endereço para não repetir o alerta ao dar F5
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // --- PARTE 2: LÓGICA DE LOGIN ---
     // No seu HTML, garanta que o form tenha o id="login-form"
     const loginForm = document.getElementById('login-form');
 
@@ -8,18 +20,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Impede a página de recarregar
             e.preventDefault();
 
-            // 2. Captura os valores digitados
+            // Captura os valores digitados
             const email = loginForm.querySelector('input[type="email"]').value;
             const password = loginForm.querySelector('input[type="password"]').value;
 
-            // 3. Validação simples para permitir a entrada
-            if (email !== "" && password !== "") {
+            // Validação simples para permitir a entrada
+            if (email.trim() !== "" && password.trim() !== "") {
 
-                // Feedback visual (opcional)
                 console.log("Login autorizado! Indo para BuscaTeto...");
 
-                // 4. O REDIRECIONAMENTO PARA A DASHBOARD
-                // O arquivo "dashboard.html" deve estar na mesma pasta
+                // Redirecionamento para a Dashboard
                 window.location.href = "dashboard.html";
 
             } else {
