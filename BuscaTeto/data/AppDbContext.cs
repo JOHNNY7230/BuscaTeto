@@ -10,5 +10,6 @@ namespace BuscaTeto.Data
         }
 
         public DbSet<Imovel> Imoveis { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
     }
 }

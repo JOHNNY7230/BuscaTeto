@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Adicionar os serviços do Swagger luiz
+// 1. Adicionar os serviços do Swagger 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

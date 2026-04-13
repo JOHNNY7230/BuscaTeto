@@ -24,4 +24,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EditorConfigFiles Remove="C:\Users\Lucas Moura\source\repos\BuscaTeto\BuscaTeto\BuscaTeto\Models\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Users\Lucas Moura\source\repos\BuscaTeto\BuscaTeto\BuscaTeto\Models\.editorconfig" />
+  </ItemGroup>
+
 </Project>
