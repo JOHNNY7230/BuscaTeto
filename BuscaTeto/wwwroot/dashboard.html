@@ -6,6 +6,18 @@
     <title>BuscaTeto | Explorar</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="dashboard.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 350px;
+            width: 90%;
+            margin: 20px auto;
+            border-radius: 20px;
+            z-index: 1;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
 
@@ -25,6 +37,8 @@
         </div>
     </nav>
 
+    <div id="map"></div>
+
     <main class="main-content">
         <div class="content-header">
             <div class="filter-chips">
@@ -36,8 +50,7 @@
             <p id="counter">Buscando imóveis...</p>
         </div>
 
-        <div class="property-grid" id="property-list">
-        </div>
+        <div class="property-grid" id="property-list"></div>
     </main>
 
     <div id="modal-add" class="modal-overlay">
@@ -55,7 +68,6 @@
                 <div class="input-group">
                     <label>Foto do Imóvel</label>
                     <input type="file" id="img-file" accept="image/*" required>
-                    <small style="color: var(--gray); font-size: 0.75rem;">Selecione uma foto do seu dispositivo.</small>
                 </div>
 
                 <div class="input-group">
@@ -70,7 +82,7 @@
                     </div>
                     <div class="input-group">
                         <label>WhatsApp (com DDD)</label>
-                        <input type="number" id="phone" placeholder="11999999999" required>
+                        <input type="number" id="phone" placeholder="31987410591" required>
                     </div>
                 </div>
 
@@ -93,6 +105,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="dashboard.js"></script>
 </body>
 </html>

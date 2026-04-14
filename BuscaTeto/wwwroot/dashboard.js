@@ -2,21 +2,33 @@
 // 1. CONFIGURAÇÕES E VARIÁVEIS GLOBAIS
 // ==========================================
 const MEU_WHATSAPP = "5531987410591";
-let imoveis = []; // Lista que armazenará os dados vindos do SQL Server
+let imoveis = [];
+let map;
+let markersGroup;
 
-// Ao carregar a página, busca os dados no Banco de Dados
+// Ao carregar a página, inicializa o mapa e busca os dados no Banco de Dados
 window.onload = async () => {
+    initMap();
     await carregarImoveisDoBanco();
 };
+
+// Inicialização do OpenStreetMap
+function initMap() {
+    // Foca inicialmente em uma posição central (ex: BH)
+    map = L.map('map').setView([-19.9167, -43.9345], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    markersGroup = L.layerGroup().addTo(map);
+}
 
 // ==========================================
 // 2. COMUNICAÇÃO COM O BACKEND (C#)
 // ==========================================
 
-// Função para buscar imóveis (GET)
 async function carregarImoveisDoBanco() {
     try {
-        const response = await fetch('/imoveis'); 
+        const response = await fetch('/imoveis');
         if (response.ok) {
             imoveis = await response.json();
             renderizar(imoveis);
@@ -29,7 +41,7 @@ async function carregarImoveisDoBanco() {
 }
 
 // ==========================================
-// 3. RENDERIZAÇÃO NA TELA (FRONTEND)
+// 3. RENDERIZAÇÃO NA TELA E NO MAPA
 // ==========================================
 
 function renderizar(lista) {
@@ -38,9 +50,19 @@ function renderizar(lista) {
     if (!grid) return;
 
     grid.innerHTML = "";
+    markersGroup.clearLayers(); // Limpa os pins antigos do mapa
 
     lista.forEach(item => {
-        // OBS: O C# envia os nomes em minúsculo (Ex: item.imagem em vez de item.Imagem)
+        // --- LÓGICA DO MAPA ---
+        // Se o banco não trouxer lat/lng, usamos uma posição baseada no ID para teste
+        const lat = item.latitude || (-19.9167 + (Math.random() * 0.05));
+        const lng = item.longitude || (-43.9345 + (Math.random() * 0.05));
+
+        L.marker([lat, lng])
+            .addTo(markersGroup)
+            .bindPopup(`<b>${item.titulo}</b><br>R$ ${item.preco.toLocaleString('pt-BR')}`);
+
+        // --- LÓGICA DO CARD ---
         const mensagem = encodeURIComponent(`Olá! Vi o anúncio "${item.titulo}" no BuscaTeto e tenho interesse.`);
         const linkWhats = `https://wa.me/${MEU_WHATSAPP}?text=${mensagem}`;
 
@@ -64,18 +86,18 @@ function renderizar(lista) {
 }
 
 // ==========================================
-// 4. EVENTO DE CADASTRO (POST) - addForm
+// 4. EVENTO DE CADASTRO (POST)
 // ==========================================
 
 const addForm = document.getElementById('add-form');
 
 if (addForm) {
     addForm.onsubmit = async (e) => {
-        e.preventDefault(); // Não deixa a página recarregar
+        e.preventDefault();
 
         const fileInput = document.getElementById('img-file');
         const file = fileInput.files[0];
-        
+
         if (!file) {
             alert("Por favor, selecione uma imagem.");
             return;
@@ -83,21 +105,18 @@ if (addForm) {
 
         const reader = new FileReader();
 
-        // Quando o navegador terminar de converter a imagem para texto (Base64)...
         reader.onloadend = async function () {
-            // Monta o objeto EXATAMENTE como o seu CriarImovelRequest.cs espera
             const novoImovel = {
                 titulo: document.getElementById('title').value,
-                descricao: document.getElementById('details').value, // Mapeia para string Descricao
-                cidade: document.getElementById('address').value,    // Mapeia para string Cidade
-                preco: parseFloat(document.getElementById('price').value), // Mapeia para decimal Preco
-                quartos: parseInt(document.getElementById('quartos')?.value || 0), // Mapeia para int Quartos
-                imagem: reader.result, // A imagem convertida em string
-                usuarioId: "00000000-0000-0000-0000-000000000000" // Guid temporário (o C# exige um Guid válido)
+                descricao: document.getElementById('details').value,
+                cidade: document.getElementById('address').value,
+                preco: parseFloat(document.getElementById('price').value),
+                quartos: parseInt(document.getElementById('quartos')?.value || 0),
+                imagem: reader.result,
+                usuarioId: "00000000-0000-0000-0000-000000000000" // Guid padrão
             };
 
             try {
-                // Envia o pacote para o seu Program.cs
                 const response = await fetch('/imoveis', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -105,10 +124,10 @@ if (addForm) {
                 });
 
                 if (response.ok) {
-                    alert("Imóvel cadastrado com sucesso no banco de dados!");
-                    await carregarImoveisDoBanco(); // Recarrega a lista para mostrar o novo imóvel
-                    closeModal(); // Fecha a janelinha
-                    addForm.reset(); // Limpa os campos
+                    alert("Imóvel cadastrado com sucesso!");
+                    await carregarImoveisDoBanco();
+                    closeModal();
+                    addForm.reset();
                 } else {
                     const erroTxt = await response.text();
                     alert("Erro ao salvar: " + erroTxt);
@@ -119,12 +138,12 @@ if (addForm) {
             }
         };
 
-        reader.readAsDataURL(file); // Inicia a leitura do arquivo
+        reader.readAsDataURL(file);
     };
 }
 
 // ==========================================
-// 5. FUNÇÕES DE UTILIDADE (FILTROS E MODAL)
+// 5. FILTROS
 // ==========================================
 
 function filterProperties() {
@@ -136,12 +155,12 @@ function filterProperties() {
     renderizar(filtrados);
 }
 
-function openModal() { 
+function openModal() {
     const modal = document.getElementById('modal-add');
-    if(modal) modal.style.display = 'flex'; 
+    if (modal) modal.style.display = 'flex';
 }
 
-function closeModal() { 
+function closeModal() {
     const modal = document.getElementById('modal-add');
-    if(modal) modal.style.display = 'none'; 
+    if (modal) modal.style.display = 'none';
 }
