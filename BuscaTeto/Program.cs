@@ -72,6 +72,7 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
         Preco = criar.Preco,
         Quartos = criar.Quartos,
         Imagem = criar.Imagem,
+        UsuarioId = criar.UsuarioId,
         CriadoEm = DateTime.UtcNow
     };
 

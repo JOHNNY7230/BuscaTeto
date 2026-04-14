@@ -12,5 +12,6 @@ namespace BuscaTeto.Models
         public int Quartos { get; set; }
         public string? Imagem { get; set; }
         public DateTime CriadoEm { get; set; }
+        public Guid UsuarioId { get; set; }
     }
 }
