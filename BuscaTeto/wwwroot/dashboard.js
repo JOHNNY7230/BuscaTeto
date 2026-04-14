@@ -6,15 +6,12 @@ let imoveis = [];
 let map;
 let markersGroup;
 
-// Ao carregar a página, inicializa o mapa e busca os dados no Banco de Dados
 window.onload = async () => {
     initMap();
     await carregarImoveisDoBanco();
 };
 
-// Inicialização do OpenStreetMap
 function initMap() {
-    // Foca inicialmente em uma posição central (ex: BH)
     map = L.map('map').setView([-19.9167, -43.9345], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -50,30 +47,36 @@ function renderizar(lista) {
     if (!grid) return;
 
     grid.innerHTML = "";
-    markersGroup.clearLayers(); // Limpa os pins antigos do mapa
+    markersGroup.clearLayers();
 
     lista.forEach(item => {
         // --- LÓGICA DO MAPA ---
-        // Se o banco não trouxer lat/lng, usamos uma posição baseada no ID para teste
         const lat = item.latitude || (-19.9167 + (Math.random() * 0.05));
         const lng = item.longitude || (-43.9345 + (Math.random() * 0.05));
 
-        L.marker([lat, lng])
+        const marker = L.marker([lat, lng])
             .addTo(markersGroup)
             .bindPopup(`<b>${item.titulo}</b><br>R$ ${item.preco.toLocaleString('pt-BR')}`);
 
+        // NOVA FUNÇÃO: Ao clicar no marcador, rola a página até o card do imóvel
+        marker.on('click', () => {
+            const cardElement = document.getElementById(`imovel-${item.id}`);
+            if (cardElement) cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
         // --- LÓGICA DO CARD ---
-        const mensagem = encodeURIComponent(`Olá! Vi o anúncio "${item.titulo}" no BuscaTeto e tenho interesse.`);
+        const mensagem = encodeURIComponent(`Olá! Vi o anúncio "${item.titulo}" no BuscaTeto.`);
         const linkWhats = `https://wa.me/${MEU_WHATSAPP}?text=${mensagem}`;
 
         grid.innerHTML += `
-            <div class="card">
+            <div class="card" id="imovel-${item.id}">
                 <div class="card-img" style="background-image: url('${item.imagem}'); background-size: cover; background-position: center;"></div>
                 <div class="card-content">
                     <div class="card-price">R$ ${item.preco.toLocaleString('pt-BR')}</div>
                     <h3 class="card-title">${item.titulo}</h3>
                     <p style="color: #2563eb; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px;">📍 ${item.cidade}</p>
-                    <p class="card-info">Quartos: ${item.quartos} • ${item.descricao || ''}</p>
+                    <p class="card-info">Tipo: ${item.tipo || 'Imóvel'} • Quartos: ${item.quartos}</p>
+                    <p class="card-desc">${item.descricao || ''}</p>
                     <a href="${linkWhats}" target="_blank" class="btn-whatsapp" style="display: block; text-align: center; background: #25D366; color: white; text-decoration: none; padding: 12px; border-radius: 10px; margin-top: 15px; font-weight: bold;">
                         Tenho Interesse
                     </a>
@@ -82,6 +85,12 @@ function renderizar(lista) {
         `;
     });
 
+    // NOVA FUNÇÃO: Ajusta o zoom do mapa automaticamente para mostrar os imóveis filtrados
+    if (lista.length > 0) {
+        const group = new L.featureGroup(markersGroup.getLayers());
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+
     if (contador) contador.innerText = `${lista.length} imóveis encontrados`;
 }
 
@@ -89,14 +98,10 @@ function renderizar(lista) {
 // 4. EVENTO DE CADASTRO (POST)
 // ==========================================
 
-const addForm = document.getElementById('add-form');
-
 if (addForm) {
     addForm.onsubmit = async (e) => {
         e.preventDefault();
-
-        const fileInput = document.getElementById('img-file');
-        const file = fileInput.files[0];
+        const file = document.getElementById('img-file').files[0];
 
         if (!file) {
             alert("Por favor, selecione uma imagem.");
@@ -104,7 +109,6 @@ if (addForm) {
         }
 
         const reader = new FileReader();
-
         reader.onloadend = async function () {
             const novoImovel = {
                 titulo: document.getElementById('title').value,
@@ -112,8 +116,9 @@ if (addForm) {
                 cidade: document.getElementById('address').value,
                 preco: parseFloat(document.getElementById('price').value),
                 quartos: parseInt(document.getElementById('quartos')?.value || 0),
+                tipo: document.getElementById('type').value, // Adicionado o tipo
                 imagem: reader.result,
-                usuarioId: "00000000-0000-0000-0000-000000000000" // Guid padrão
+                usuarioId: "00000000-0000-0000-0000-000000000000"
             };
 
             try {
@@ -129,23 +134,21 @@ if (addForm) {
                     closeModal();
                     addForm.reset();
                 } else {
-                    const erroTxt = await response.text();
-                    alert("Erro ao salvar: " + erroTxt);
+                    alert("Erro ao salvar no servidor.");
                 }
             } catch (error) {
-                console.error("Erro na requisição:", error);
-                alert("Erro de conexão com o servidor.");
+                console.error("Erro:", error);
             }
         };
-
         reader.readAsDataURL(file);
     };
 }
 
 // ==========================================
-// 5. FILTROS
+// 5. FUNÇÕES DE FILTRO (TEXTO E TIPO)
 // ==========================================
 
+// Filtro por Barra de Pesquisa
 function filterProperties() {
     const busca = document.getElementById('search-input').value.toLowerCase();
     const filtrados = imoveis.filter(i =>
@@ -155,12 +158,23 @@ function filterProperties() {
     renderizar(filtrados);
 }
 
-function openModal() {
-    const modal = document.getElementById('modal-add');
-    if (modal) modal.style.display = 'flex';
+// NOVA FUNÇÃO: Filtro pelos botões (Chips)
+function filterByType(tipo) {
+    // Estilização visual dos botões
+    document.querySelectorAll('.chip').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if (tipo === '') {
+        renderizar(imoveis);
+    } else {
+        const filtrados = imoveis.filter(i => i.tipo === tipo);
+        renderizar(filtrados);
+    }
 }
 
-function closeModal() {
-    const modal = document.getElementById('modal-add');
-    if (modal) modal.style.display = 'none';
-}
+// ==========================================
+// 6. MODAL
+// ==========================================
+
+function openModal() { document.getElementById('modal-add').style.display = 'flex'; }
+function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
