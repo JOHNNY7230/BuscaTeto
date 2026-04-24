@@ -7,44 +7,54 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // --- PARTE 2: LÓGICA DE LOGIN REAL (CONECTADA AO BANCO) ---
+    // --- PARTE 2: LÓGICA DE LOGIN ---
     const loginForm = document.getElementById('login-form');
+    const emailInput = document.getElementById('user-email');
+
+    // Referências das mensagens de erro
+    const loginInvalidMsg = document.getElementById('login-invalid-msg');
+    const emailFormatError = document.getElementById('email-format-error');
 
     if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => { // Adicionamos 'async' aqui
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Usando os IDs que vi no seu HTML anterior
-            const emailDigitado = document.getElementById('user-email').value;
+            // Resetar mensagens de erro a cada tentativa
+            loginInvalidMsg.style.display = 'none';
+            emailFormatError.style.display = 'none';
+
+            // 1. Validação de formato de e-mail (Frontend)
+            if (!emailInput.checkValidity()) {
+                emailFormatError.style.display = 'block';
+                return; // Para a execução aqui
+            }
+
+            const emailDigitado = emailInput.value;
             const senhaDigitada = document.getElementById('user-pass').value;
 
             try {
-                // 1. Busca a lista de usuários do seu Program.cs
+                // 2. Busca a lista de usuários do backend C#
                 const response = await fetch('/usuarios');
-                
+
                 if (!response.ok) {
                     throw new Error("Erro ao consultar o servidor.");
                 }
 
                 const usuarios = await response.json();
 
-                // 2. Procura se existe alguém com esse e-mail e senha
-                const usuarioEncontrado = usuarios.find(u => 
+                // 3. Verifica as credenciais
+                const usuarioEncontrado = usuarios.find(u =>
                     u.email === emailDigitado && u.senha === senhaDigitada
                 );
 
                 if (usuarioEncontrado) {
-                    console.log("Login autorizado para:", usuarioEncontrado.nome);
-                    
-                    // 3. Guarda o ID e o Nome do usuário na sessão do navegador
-                    // Isso ajuda a saber quem está postando imóveis depois
+                    console.log("Login autorizado!");
                     sessionStorage.setItem('usuarioId', usuarioEncontrado.id);
                     sessionStorage.setItem('usuarioNome', usuarioEncontrado.nome);
-
-                    // Redireciona para a Dashboard
                     window.location.href = "dashboard.html";
                 } else {
-                    alert("E-mail ou senha incorretos. Tente novamente.");
+                    // Mostra a mensagem de "Login Inválido" no topo do card
+                    loginInvalidMsg.style.display = 'block';
                 }
 
             } catch (error) {

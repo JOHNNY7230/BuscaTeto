@@ -14,6 +14,8 @@
     --radius-md: 12px;
     --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
     --transition: all 0.3s ease;
+    /* Adicionada cor de erro para manter o padrão */
+    --error: #ef4444;
 }
 
 /* RESET E BÁSICO */
@@ -269,7 +271,27 @@ body {
             text-decoration: underline;
         }
 
-/* ANIMAÇÕES (KEYFRAMES) */
+/* --- NOVAS ESTILIZAÇÕES PARA MENSAGENS DE ERRO --- */
+
+#login-invalid-msg {
+    animation: slideUp 0.4s ease-out;
+}
+
+#email-format-error {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ANIMAÇÕES (KEYFRAMES ORIGINAIS) */
 @keyframes fadeScale {
     0% {
         opacity: 0;
@@ -294,7 +316,7 @@ body {
     }
 }
 
-/* RESPONSIVIDADE (Para Celular) */
+/* RESPONSIVIDADE */
 @media (max-width: 900px) {
     .login-container {
         grid-template-columns: 1fr;
@@ -303,7 +325,7 @@ body {
     .login-sidebar {
         display: none;
     }
-    /* Esconde a sidebar no mobile */
+
     .login-form-wrapper {
         padding: 1rem;
         background-color: var(--light);
