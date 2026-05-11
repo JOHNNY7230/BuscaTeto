@@ -20,8 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             // Resetar mensagens de erro a cada tentativa
-            loginInvalidMsg.style.display = 'none';
-            emailFormatError.style.display = 'none';
+           if (loginInvalidMsg.style.display === 'none') {
+               loginInvalidMsg.style.display = 'block';
+           }
+           if (emailFormatError.style.display === 'none') {
+               emailFormatError.style.display = 'block';
+           }
 
             // 1. Validação de formato de e-mail (Frontend)
             if (!emailInput.checkValidity()) {
