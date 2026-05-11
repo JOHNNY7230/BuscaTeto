@@ -11,16 +11,20 @@ using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Força a API a escutar numa porta HTTP específica e limpa, contornando bloqueios do Windows
+builder.WebHost.UseUrls("http://localhost:5005");
+
 // 1. Adicionar os serviços do Swagger 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configuração da Base de Dados (Entity Framework Core)
-// Em vez de .UseSqlServer, use isto:
+// Configuração da Base de Dados (Entity Framework Core com MySQL)
+// Definimos a versão manualmente para evitar que o AutoDetect quebre o arranque da aplicação
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        connectionString,
+        new MySqlServerVersion(new Version(8, 0, 30)) // Versão padrão estável do MySQL
     ));
 
 builder.Services.AddCors(options => {
@@ -37,11 +41,7 @@ app.UseCors();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Serve ficheiros estáticos em wwwroot
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-// Serve ficheiros estáticos em wwwroot
+// Serve ficheiros estáticos na pasta wwwroot (Corrigido: registado apenas uma vez)
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
@@ -80,11 +80,11 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
         Id = Guid.NewGuid(),
         Titulo = criar.Titulo,
         Descricao = criar.Descricao,
-        Logradouro = criar.Logradouro, 
-        Numero = criar.Numero,         
-        Bairro = criar.Bairro,         
-        Cidade = criar.Cidade,         
-        CEP = criar.CEP,               
+        Logradouro = criar.Logradouro,
+        Numero = criar.Numero,
+        Bairro = criar.Bairro,
+        Cidade = criar.Cidade,
+        CEP = criar.CEP,
         Preco = criar.Preco,
         Quartos = criar.Quartos,
         Imagem = criar.Imagem,
@@ -93,7 +93,7 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
     };
 
     db.Imoveis.Add(criado);
-    await db.SaveChangesAsync(); // Grava fisicamente no SQL Server
+    await db.SaveChangesAsync(); // Grava fisicamente no MySQL
 
     return Results.Created($"/imoveis/{criado.Id}", criado);
 });
@@ -108,30 +108,29 @@ app.MapPut("/imoveis/{id}", async (AppDbContext db, Guid id, AtualizarImovelRequ
     if (atualizar.Descricao != null) imovel.Descricao = atualizar.Descricao;
     if (atualizar.Cidade != null) imovel.Cidade = atualizar.Cidade;
 
-    // As duas linhas corrigidas com a extração do .Value
     if (atualizar.Preco != null) imovel.Preco = atualizar.Preco.Value;
     if (atualizar.Quartos != null) imovel.Quartos = atualizar.Quartos.Value;
-
     if (atualizar.Imagem != null) imovel.Imagem = atualizar.Imagem;
 
-    await db.SaveChangesAsync(); // Atualiza fisicamente no SQL Server
+    await db.SaveChangesAsync(); // Atualiza fisicamente no MySQL
     return Results.NoContent();
 });
-// Buscar todos os usuários
+
+// Buscar todos os utilizadores
 app.MapGet("/usuarios", async (AppDbContext db) =>
 {
     var usuarios = await db.Usuarios.ToListAsync();
     return Results.Ok(usuarios);
 });
 
-// Buscar um único usuário pelo ID
+// Buscar um único utilizador pelo ID
 app.MapGet("/usuarios/{id}", async (AppDbContext db, Guid id) =>
 {
     var usuario = await db.Usuarios.FindAsync(id);
     return usuario is null ? Results.NotFound() : Results.Ok(usuario);
 });
 
-// Guardar um novo usuário na Base de Dados
+// Guardar um novo utilizador na Base de Dados
 app.MapPost("/usuarios", async (AppDbContext db, CriarUsuarioRequest criar) =>
 {
     var criado = new Usuario
@@ -139,7 +138,7 @@ app.MapPost("/usuarios", async (AppDbContext db, CriarUsuarioRequest criar) =>
         Id = Guid.NewGuid(),
         Nome = criar.Nome,
         Email = criar.Email,
-        Senha = criar.Senha, // Dica de segurança: futuramente, adicione hash na senha
+        Senha = criar.Senha,
         Telefone = criar.Telefone,
         CriadoEm = DateTime.UtcNow
     };
@@ -150,7 +149,7 @@ app.MapPost("/usuarios", async (AppDbContext db, CriarUsuarioRequest criar) =>
     return Results.Created($"/usuarios/{criado.Id}", criado);
 });
 
-// Atualizar um usuário existente
+// Atualizar um utilizador existente
 app.MapPut("/usuarios/{id}", async (AppDbContext db, Guid id, AtualizarUsuarioRequest atualizar) =>
 {
     var usuario = await db.Usuarios.FindAsync(id);
@@ -164,4 +163,5 @@ app.MapPut("/usuarios/{id}", async (AppDbContext db, Guid id, AtualizarUsuarioRe
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
+
 app.Run();
