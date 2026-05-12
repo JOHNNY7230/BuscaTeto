@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using BuscaTeto.Repositories;
 using BuscaTeto.Models;
 using BuscaTeto.Data;
 using Microsoft.EntityFrameworkCore;
@@ -11,17 +10,17 @@ using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Adicionar os serviços do Swagger 
+// Força a execução em HTTP na porta 5005 para evitar conflitos de socket e HTTPS local
+builder.WebHost.UseUrls("http://localhost:5005");
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configuração da Base de Dados (Entity Framework Core)
-// Em vez de .UseSqlServer, use isto:
+// Configuração do MySQL com versão explícita
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
-    ));
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 30)))
+);
 
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => {
@@ -32,28 +31,27 @@ builder.Services.AddCors(options => {
 var app = builder.Build();
 
 app.UseCors();
-
-// 2. Ativar a interface visual do Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Serve ficheiros estáticos em wwwroot
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-// Serve ficheiros estáticos em wwwroot
+// Servir arquivos estáticos do frontend (declarado apenas uma vez)
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.MapGet("/", () => Results.Redirect("/index.html"));
 
-// Buscar imóveis na Base de Dados com filtros
+// --- ROTAS DE IMÓVEIS ---
+
+// Buscar imóveis com relacionamentos (Endereço e Usuário) e filtros
 app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin, decimal? precoMax, int? quartosMin) =>
 {
-    var query = db.Imoveis.AsQueryable();
+    var query = db.Imoveis
+        .Include(i => i.Endereco)
+        .Include(i => i.Usuario)
+        .AsQueryable();
 
     if (!string.IsNullOrWhiteSpace(cidade))
-        query = query.Where(i => i.Cidade.Contains(cidade));
+        query = query.Where(i => i.Endereco != null && i.Endereco.Cidade.Contains(cidade));
     if (precoMin.HasValue)
         query = query.Where(i => i.Preco >= precoMin.Value);
     if (precoMax.HasValue)
@@ -65,40 +63,63 @@ app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin
     return Results.Ok(resultados);
 });
 
-// Buscar um único imóvel pelo ID
+// Buscar imóvel singular pelo ID trazendo os relacionamentos
 app.MapGet("/imoveis/{id}", async (AppDbContext db, Guid id) =>
 {
-    var imovel = await db.Imoveis.FindAsync(id);
+    var imovel = await db.Imoveis
+        .Include(i => i.Endereco)
+        .Include(i => i.Usuario)
+        .FirstOrDefaultAsync(i => i.Id == id);
+
     return imovel is null ? Results.NotFound() : Results.Ok(imovel);
 });
 
-// Guardar um novo imóvel na Base de Dados
+// Cadastrar Imóvel e seu Endereço associado
 app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
 {
-    var criado = new Imovel
+    // Valida se o usuário dono do imóvel realmente existe
+    var usuarioExiste = await db.Usuarios.AnyAsync(u => u.Id == criar.UsuarioId);
+    if (!usuarioExiste) return Results.BadRequest("O usuário especificado para o imóvel não foi encontrado.");
+
+    // 1. Persiste o Endereço primeiro
+    var novoEndereco = new Endereco
+    {
+        Id = Guid.NewGuid(),
+        Logradouro = criar.Endereco.Logradouro,
+        Numero = criar.Endereco.Numero,
+        Bairro = criar.Endereco.Bairro,
+        Cidade = criar.Endereco.Cidade,
+        Estado = criar.Endereco.Estado,
+        CEP = criar.Endereco.CEP
+    };
+    db.Enderecos.Add(novoEndereco);
+
+    // 2. Persiste o Imóvel com a FK apontando para o Endereço recém-criado
+    var novoImovel = new Imovel
     {
         Id = Guid.NewGuid(),
         Titulo = criar.Titulo,
         Descricao = criar.Descricao,
-        Logradouro = criar.Logradouro, 
-        Numero = criar.Numero,         
-        Bairro = criar.Bairro,         
-        Cidade = criar.Cidade,         
-        CEP = criar.CEP,               
         Preco = criar.Preco,
         Quartos = criar.Quartos,
         Imagem = criar.Imagem,
         UsuarioId = criar.UsuarioId,
+        EnderecoId = novoEndereco.Id,
         CriadoEm = DateTime.UtcNow
     };
+    db.Imoveis.Add(novoImovel);
 
-    db.Imoveis.Add(criado);
-    await db.SaveChangesAsync(); // Grava fisicamente no SQL Server
+    await db.SaveChangesAsync();
 
-    return Results.Created($"/imoveis/{criado.Id}", criado);
+    // Retorna o objeto completo montado para o client
+    var imovelCompleto = await db.Imoveis
+        .Include(i => i.Endereco)
+        .FirstOrDefaultAsync(i => i.Id == novoImovel.Id);
+
+    return Results.Created($"/imoveis/{novoImovel.Id}", imovelCompleto);
 });
 
-// Atualizar um imóvel existente
+// Atualizar Imóvel
 app.MapPut("/imoveis/{id}", async (AppDbContext db, Guid id, AtualizarImovelRequest atualizar) =>
 {
     var imovel = await db.Imoveis.FindAsync(id);
@@ -106,51 +127,62 @@ app.MapPut("/imoveis/{id}", async (AppDbContext db, Guid id, AtualizarImovelRequ
 
     if (atualizar.Titulo != null) imovel.Titulo = atualizar.Titulo;
     if (atualizar.Descricao != null) imovel.Descricao = atualizar.Descricao;
-    if (atualizar.Cidade != null) imovel.Cidade = atualizar.Cidade;
-
-    // As duas linhas corrigidas com a extração do .Value
-    if (atualizar.Preco != null) imovel.Preco = atualizar.Preco.Value;
-    if (atualizar.Quartos != null) imovel.Quartos = atualizar.Quartos.Value;
-
+    if (atualizar.Preco.HasValue) imovel.Preco = atualizar.Preco.Value;
+    if (atualizar.Quartos.HasValue) imovel.Quartos = atualizar.Quartos.Value;
     if (atualizar.Imagem != null) imovel.Imagem = atualizar.Imagem;
 
-    await db.SaveChangesAsync(); // Atualiza fisicamente no SQL Server
+    await db.SaveChangesAsync();
     return Results.NoContent();
 });
-// Buscar todos os usuários
+
+// --- ROTAS DE USUÁRIOS ---
+
 app.MapGet("/usuarios", async (AppDbContext db) =>
 {
     var usuarios = await db.Usuarios.ToListAsync();
     return Results.Ok(usuarios);
 });
 
-// Buscar um único usuário pelo ID
 app.MapGet("/usuarios/{id}", async (AppDbContext db, Guid id) =>
 {
     var usuario = await db.Usuarios.FindAsync(id);
     return usuario is null ? Results.NotFound() : Results.Ok(usuario);
 });
 
-// Guardar um novo usuário na Base de Dados
-app.MapPost("/usuarios", async (AppDbContext db, CriarUsuarioRequest criar) =>
+app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
 {
-    var criado = new Usuario
+    // 1. Primeiro, criamos o objeto de Endereço baseado no registro aninhado
+    var novoEndereco = new Endereco
     {
         Id = Guid.NewGuid(),
-        Nome = criar.Nome,
-        Email = criar.Email,
-        Senha = criar.Senha, // Dica de segurança: futuramente, adicione hash na senha
-        Telefone = criar.Telefone,
+        Logradouro = criar.Endereco.Logradouro, // Acesso corrigido
+        Numero = criar.Endereco.Numero,
+        Bairro = criar.Endereco.Bairro,
+        Cidade = criar.Endereco.Cidade,
+        CEP = criar.Endereco.CEP
+    };
+    db.Enderecos.Add(novoEndereco);
+
+    // 2. Depois, criamos o Imóvel associando o ID do endereço acima
+    var criado = new Imovel
+    {
+        Id = Guid.NewGuid(),
+        Titulo = criar.Titulo,
+        Descricao = criar.Descricao,
+        Preco = criar.Preco,
+        Quartos = criar.Quartos,
+        Imagem = criar.Imagem,
+        UsuarioId = criar.UsuarioId,
+        EnderecoId = novoEndereco.Id, // Vinculação da nova chave estrangeira
         CriadoEm = DateTime.UtcNow
     };
 
-    db.Usuarios.Add(criado);
+    db.Imoveis.Add(criado);
     await db.SaveChangesAsync();
 
-    return Results.Created($"/usuarios/{criado.Id}", criado);
+    return Results.Created($"/imoveis/{criado.Id}", criado);
 });
 
-// Atualizar um usuário existente
 app.MapPut("/usuarios/{id}", async (AppDbContext db, Guid id, AtualizarUsuarioRequest atualizar) =>
 {
     var usuario = await db.Usuarios.FindAsync(id);
@@ -164,4 +196,5 @@ app.MapPut("/usuarios/{id}", async (AppDbContext db, Guid id, AtualizarUsuarioRe
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
+
 app.Run();
