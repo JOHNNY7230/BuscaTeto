@@ -24,11 +24,12 @@ namespace BuscaTeto.Models
         [Column(TypeName = "longtext")]
         public string? Imagem { get; set; }
 
-        // --- Chaves Estrangeiras e Propriedades de Navegação ---
+
         [Required]
         [Column(TypeName = "char(36)")]
         public Guid UsuarioId { get; set; }
         public Usuario? Usuario { get; set; }
+
 
         [Required]
         [Column(TypeName = "char(36)")]

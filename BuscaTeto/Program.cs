@@ -52,6 +52,7 @@ app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin
 
     if (!string.IsNullOrWhiteSpace(cidade))
         query = query.Where(i => i.Endereco != null && i.Endereco.Cidade.Contains(cidade));
+        query = query.Where(i => i.Endereco != null && i.Endereco.Cidade.Contains(cidade));
     if (precoMin.HasValue)
         query = query.Where(i => i.Preco >= precoMin.Value);
     if (precoMax.HasValue)
@@ -66,6 +67,11 @@ app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin
 // Buscar imóvel singular pelo ID trazendo os relacionamentos
 app.MapGet("/imoveis/{id}", async (AppDbContext db, Guid id) =>
 {
+    var imovel = await db.Imoveis
+        .Include(i => i.Endereco)
+        .Include(i => i.Usuario)
+        .FirstOrDefaultAsync(i => i.Id == id);
+
     var imovel = await db.Imoveis
         .Include(i => i.Endereco)
         .Include(i => i.Usuario)
@@ -138,7 +144,7 @@ app.MapPut("/imoveis/{id}", async (AppDbContext db, Guid id, AtualizarImovelRequ
 // --- ROTAS DE USUÁRIOS ---
 
 app.MapGet("/usuarios", async (AppDbContext db) =>
-{
+
     var usuarios = await db.Usuarios.ToListAsync();
     return Results.Ok(usuarios);
 });
