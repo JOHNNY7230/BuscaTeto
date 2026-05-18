@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using BuscaTeto.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using BuscaTeto.Models;
 
 namespace BuscaTeto.Controllers
@@ -11,30 +7,26 @@ namespace BuscaTeto.Controllers
     [Route("api/[controller]")]
     public class UsuariosController : ControllerBase
     {
-        private readonly AppDbContext _context;
-
-        public UsuariosController(AppDbContext context)
-        {
-            _context = context;
-        }
-
         [HttpPost]
-        public async Task<IActionResult> Cadastrar(CriarUsuarioRequest request)
+        public IActionResult CadastrarUsuario([FromBody] CriarUsuarioRequest request)
         {
-            var novoUsuario = new Usuario
+            // Regra de Negócio: O sistema não pode aceitar um tipo que não exista
+            if (request.Tipo != TipoUsuario.Cliente && request.Tipo != TipoUsuario.Proprietario)
             {
-                Id = Guid.NewGuid(),
-                Nome = request.Nome,
-                Email = request.Email,
-                Senha = request.Senha, // Dica: No futuro, use criptografia aqui!
-                Telefone = request.Telefone,
-                CriadoEm = DateTime.UtcNow
-            };
+                return BadRequest("Tipo de usuário inválido. Escolha 0 para Cliente ou 1 para Proprietário.");
+            }
 
-            _context.Usuarios.Add(novoUsuario);
-            await _context.SaveChangesAsync();
+            // Exemplo de aplicação da regra de negócio:
+            if (request.Tipo == TipoUsuario.Proprietario)
+            {
+                // Se for proprietário, você pode adicionar lógicas extras no futuro,
+                // como exigir CNPJ, telefone obrigatório, etc.
+            }
 
-            return Ok(new { mensagem = "Usuário criado com sucesso!" });
+            // Aqui você chama o seu repositório para salvar no banco de dados!
+            // Exemplo: _repositorio.SalvarUsuario(request);
+
+            return Ok(new { Mensagem = $"Registrado com sucesso! Perfil: {request.Tipo}" });
         }
     }
 }

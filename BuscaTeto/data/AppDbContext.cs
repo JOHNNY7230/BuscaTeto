@@ -12,7 +12,7 @@ namespace BuscaTeto.Data
 
         public DbSet<Endereco> Enderecos { get; set; }
 
-        public DbSet<Endereco> Enderecos { get; set; } // <-- Adicionar esta linha
+       
 
     }
 }

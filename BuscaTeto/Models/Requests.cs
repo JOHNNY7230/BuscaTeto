@@ -2,46 +2,52 @@
 
 namespace BuscaTeto.Models
 {
-    // Sub-objeto para receber os dados do endereço no cadastro do imóvel
-    public record CriarEnderecoRequest(
-        string Logradouro,
-        string? Numero,
-        string? Bairro,
-        string Cidade,
-        string? Estado,
-        string? CEP
-    );
+    // Define as regras de tipo de utilizador
+    public enum TipoUsuario
+    {
+        Cliente = 0,
+        Proprietario = 1
+    }
 
-    // O cadastro de imóvel agora exige o objeto Endereco aninhado
-    public record CriarImovelRequest(
-        string Titulo,
-        string? Descricao,
-        decimal Preco,
-        int Quartos,
-        string? Imagem,
-        Guid UsuarioId,
-        CriarEnderecoRequest Endereco
-    );
+    public class CriarUsuarioRequest
+    {
+        public string Nome { get; set; }
+        public string Email { get; set; }
+        public string Senha { get; set; }
+        public string Telefone { get; set; }
+        public TipoUsuario Tipo { get; set; }
+    }
 
-    public record AtualizarImovelRequest(
-        string? Titulo,
-        string? Descricao,
-        decimal? Preco,
-        int? Quartos,
-        string? Imagem
-    );
+    public class AtualizarUsuarioRequest
+    {
+        public string Nome { get; set; }
+        public string Email { get; set; }
+        public string Senha { get; set; }
+        public string Telefone { get; set; }
+    }
 
-    public record CriarUsuarioRequest(
-        string Nome,
-        string Email,
-        string Senha,
-        string? Telefone
-    );
+    public class CriarImovelRequest
+    {
+        public string Titulo { get; set; }
+        public string Descricao { get; set; }
+        public string Logradouro { get; set; }
+        public string Numero { get; set; }
+        public string Bairro { get; set; }
+        public string Cidade { get; set; }
+        public string CEP { get; set; }
+        public decimal Preco { get; set; }
+        public int Quartos { get; set; }
+        public string Imagem { get; set; }
+        public Guid UsuarioId { get; set; }
+    }
 
-    public record AtualizarUsuarioRequest(
-        string? Nome,
-        string? Email,
-        string? Senha,
-        string? Telefone
-    );
+    public class AtualizarImovelRequest
+    {
+        public string Titulo { get; set; }
+        public string Descricao { get; set; }
+        public string Cidade { get; set; }
+        public decimal? Preco { get; set; }
+        public int? Quartos { get; set; }
+        public string Imagem { get; set; }
+    }
 }

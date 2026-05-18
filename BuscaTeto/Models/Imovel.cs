@@ -1,41 +1,29 @@
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BuscaTeto.Models
 {
     public class Imovel
     {
-        [Key]
-        [Column(TypeName = "char(36)")]
         public Guid Id { get; set; }
+        public string Titulo { get; set; }
+        public string Descricao { get; set; }
 
-        [Required]
-        [MaxLength(255)]
-        public string Titulo { get; set; } = string.Empty;
+        // Propriedades de endereço
+        public string Logradouro { get; set; }
+        public string Numero { get; set; }
+        public string Bairro { get; set; }
+        public string Cidade { get; set; }
+        public string CEP { get; set; }
 
-        public string? Descricao { get; set; }
-
-        [Column(TypeName = "decimal(18,2)")]
+        // Detalhes do imóvel
         public decimal Preco { get; set; }
-
         public int Quartos { get; set; }
+        public string Imagem { get; set; }
 
-        [Column(TypeName = "longtext")]
-        public string? Imagem { get; set; }
-
-
-        [Required]
-        [Column(TypeName = "char(36)")]
+        // Relacionamento com o Proprietário
         public Guid UsuarioId { get; set; }
-        public Usuario? Usuario { get; set; }
 
-
-        [Required]
-        [Column(TypeName = "char(36)")]
-        public Guid EnderecoId { get; set; }
-        public Endereco? Endereco { get; set; }
-
-        public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+        // Controlo de data
+        public DateTime CriadoEm { get; set; }
     }
 }
