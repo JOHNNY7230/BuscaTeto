@@ -20,11 +20,17 @@ builder.Services.AddSwaggerGen();
 
 // Configuração da Base de Dados (Entity Framework Core com MySQL)
 // Definimos a versão manualmente para evitar que o AutoDetect quebre o arranque da aplicação
+// Configuração da Base de Dados (Entity Framework Core com MySQL) atualizada com Resiliência
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         connectionString,
-        new MySqlServerVersion(new Version(8, 0, 30)) // Versão padrão estável do MySQL
+        new MySqlServerVersion(new Version(8, 0, 30)), // Versão padrão estável do MySQL
+        mySqlOptions => mySqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,               // Tenta reconectar até 5 vezes se a rede oscilar
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorNumbersToAdd: null
+        )
     ));
 
 builder.Services.AddCors(options => {
