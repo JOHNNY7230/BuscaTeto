@@ -52,13 +52,14 @@ app.UseStaticFiles();
 
 app.MapGet("/", () => Results.Redirect("/index.html"));
 
-// Buscar imóveis na Base de Dados com filtros
+// Buscar um único imóvel pelo ID
 app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin, decimal? precoMax, int? quartosMin) =>
 {
-    var query = db.Imoveis.AsQueryable();
+    // O .Include traz os dados da tabela Enderecos junto com o Imovel
+    var query = db.Imoveis.Include(i => i.Endereco).AsQueryable();
 
     if (!string.IsNullOrWhiteSpace(cidade))
-        query = query.Where(i => i.Cidade.Contains(cidade));
+        query = query.Where(i => i.Endereco.Cidade.Contains(cidade)); // Buscando da tabela relacionada
     if (precoMin.HasValue)
         query = query.Where(i => i.Preco >= precoMin.Value);
     if (precoMax.HasValue)
@@ -70,35 +71,37 @@ app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin
     return Results.Ok(resultados);
 });
 
-// Buscar um único imóvel pelo ID
-app.MapGet("/imoveis/{id}", async (AppDbContext db, Guid id) =>
-{
-    var imovel = await db.Imoveis.FindAsync(id);
-    return imovel is null ? Results.NotFound() : Results.Ok(imovel);
-});
-
 // Guardar um novo imóvel na Base de Dados
 app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
 {
+    var novoEnderecoId = Guid.NewGuid();
+
     var criado = new Imovel
     {
         Id = Guid.NewGuid(),
         Titulo = criar.Titulo,
         Descricao = criar.Descricao,
-        Logradouro = criar.Logradouro,
-        Numero = criar.Numero,
-        Bairro = criar.Bairro,
-        Cidade = criar.Cidade,
-        CEP = criar.CEP,
         Preco = criar.Preco,
         Quartos = criar.Quartos,
         Imagem = criar.Imagem,
         UsuarioId = criar.UsuarioId,
-        CriadoEm = DateTime.UtcNow
+        CriadoEm = DateTime.UtcNow,
+
+        // Vincula e cria o endereço automaticamente na tabela Enderecos
+        EnderecoId = novoEnderecoId,
+        Endereco = new Endereco
+        {
+            Id = novoEnderecoId,
+            Logradouro = criar.Logradouro,
+            Numero = criar.Numero,
+            Bairro = criar.Bairro,
+            Cidade = criar.Cidade,
+            CEP = criar.CEP
+        }
     };
 
     db.Imoveis.Add(criado);
-    await db.SaveChangesAsync(); // Grava fisicamente no MySQL
+    await db.SaveChangesAsync(); // O EF grava o endereço e o imóvel respeitando a FK!
 
     return Results.Created($"/imoveis/{criado.Id}", criado);
 });
@@ -106,18 +109,22 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
 // Atualizar um imóvel existente
 app.MapPut("/imoveis/{id}", async (AppDbContext db, Guid id, AtualizarImovelRequest atualizar) =>
 {
-    var imovel = await db.Imoveis.FindAsync(id);
+    // Carrega o imóvel trazendo o endereço junto
+    var imovel = await db.Imoveis.Include(i => i.Endereco).FirstOrDefaultAsync(i => i.Id == id);
     if (imovel is null) return Results.NotFound();
 
     if (atualizar.Titulo != null) imovel.Titulo = atualizar.Titulo;
     if (atualizar.Descricao != null) imovel.Descricao = atualizar.Descricao;
-    if (atualizar.Cidade != null) imovel.Cidade = atualizar.Cidade;
+    
+    // Atualiza a cidade dentro do objeto de Endereço vinculado
+    if (atualizar.Cidade != null && imovel.Endereco != null) 
+        imovel.Endereco.Cidade = atualizar.Cidade;
 
     if (atualizar.Preco != null) imovel.Preco = atualizar.Preco.Value;
     if (atualizar.Quartos != null) imovel.Quartos = atualizar.Quartos.Value;
     if (atualizar.Imagem != null) imovel.Imagem = atualizar.Imagem;
 
-    await db.SaveChangesAsync(); // Atualiza fisicamente no MySQL
+    await db.SaveChangesAsync(); 
     return Results.NoContent();
 });
 
@@ -170,3 +177,23 @@ app.MapPut("/usuarios/{id}", async (AppDbContext db, Guid id, AtualizarUsuarioRe
 });
 
 app.Run();
+
+// Define a estrutura exata que o endpoint POST /imoveis espera receber do JavaScript
+public record CriarImovelRequest(
+    string Titulo,
+    string? Descricao,
+    decimal Preco,
+    int Quartos,
+    string? Imagem,
+    Guid UsuarioId,
+    string Logradouro,
+    string? Numero,
+    string? Bairro,
+    string Cidade,
+    string CEP
+);
+
+// Mantém os outros records de suporte abaixo, caso existam
+public record AtualizarImovelRequest(string? Titulo, string? Descricao, string? Cidade, decimal? Preco, int? Quartos, string? Imagem);
+public record CriarUsuarioRequest(string Nome, string Email, string Senha, string Telefone);
+public record AtualizarUsuarioRequest(string? Nome, string? Email, string? Senha, string? Telefone);

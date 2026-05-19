@@ -16,26 +16,6 @@ namespace BuscaTeto.Models
         [MaxLength(1000)]
         public string? Descricao { get; set; }
 
-        
-        [Required]
-        [MaxLength(150)]
-        public string Logradouro { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(20)]
-        public string Numero { get; set; } = string.Empty;
-
-        [MaxLength(100)]
-        public string? Bairro { get; set; }
-
-        [Required]
-        [MaxLength(100)]
-        public string Cidade { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(15)]
-        public string CEP { get; set; } = string.Empty;
- 
         [Column(TypeName = "decimal(10,2)")]
         public decimal Preco { get; set; }
 
@@ -43,8 +23,20 @@ namespace BuscaTeto.Models
 
         public string? Imagem { get; set; }
 
+        // ==========================================
+        // RELACIONAMENTO COM USUÁRIO (Já existente)
+        // ==========================================
         public Guid UsuarioId { get; set; }
         public Usuario? Usuario { get; set; }
+
+        // ==========================================================
+        // RELACIONAMENTO COM ENDEREÇO (ADICIONE ESTE BLOCO AQUI!)
+        // ==========================================================
+        [Required]
+        public Guid EnderecoId { get; set; } // Representa o campo EnderecoId CHAR(36) no MySQL
+
+        [ForeignKey("EnderecoId")]
+        public Endereco? Endereco { get; set; } // Propriedade de navegação do Entity Framework
 
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     }
