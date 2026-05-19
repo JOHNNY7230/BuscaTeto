@@ -50,4 +50,4 @@ namespace BuscaTeto.Models
         public int? Quartos { get; set; }
         public string Imagem { get; set; }
     }
-}
+} /* macaco */
