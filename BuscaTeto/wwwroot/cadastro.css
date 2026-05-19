@@ -64,6 +64,7 @@ body {
     }
 
 .input-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
     background: var(--bg-input);
@@ -85,16 +86,45 @@ body {
         height: 20px;
         color: var(--text-sub);
         margin-right: 12px;
+        flex-shrink: 0; /* Impede que o ícone amasse caso o texto o empurre */
     }
 
-    .input-wrapper input {
+    /* --- SELEÇÃO UNIFICADA: INPUT E SELECT JUNTOS --- */
+    .input-wrapper input,
+    .input-wrapper select {
         flex: 1;
         border: none;
         background: transparent;
         outline: none;
         font-size: 15px;
         color: var(--text-main);
+        height: 100%;
+        width: 100%;
     }
+
+    /* --- AJUSTES EXCLUSIVOS DO SELECT --- */
+    .input-wrapper select {
+        appearance: none; /* Remove a seta padrão feia do navegador */
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        cursor: pointer;
+        padding-right: 24px; /* Dá espaço para a nossa setinha customizada */
+        /* Cria uma setinha minimalista moderna usando SVG */
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right center;
+    }
+
+        /* Cor do texto quando a opção padrão ("O que você deseja fazer?") estiver ativa */
+        .input-wrapper select:invalid {
+            color: var(--text-sub);
+        }
+
+        /* Garante que o fundo das opções internas seja branco no Windows/Mac */
+        .input-wrapper select option {
+            background-color: #ffffff;
+            color: var(--text-main);
+        }
 
 .btn-submit {
     margin-top: 10px;

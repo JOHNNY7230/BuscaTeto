@@ -1,0 +1,261 @@
+﻿:root {
+    --primary-color: #2563eb;
+    --text-main: #1a1d23;
+    --text-sub: #64748b;
+    --bg-main: #f8fafc;
+    --border-color: #e2e8f0;
+    --radius: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+}
+
+/* Navbar */
+.navbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 16px 0;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+    .logo span {
+        color: var(--primary-color);
+    }
+
+/* Barra de Busca em Pílula */
+.search-pill {
+    display: flex;
+    align-items: center;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    padding: 4px 6px 4px 20px;
+    width: 100%;
+    max-width: 450px;
+    transition: all 0.2s ease;
+}
+
+    .search-pill:focus-within {
+        border-color: var(--primary-color);
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    }
+
+    .search-pill input {
+        border: none;
+        background: transparent;
+        outline: none;
+        width: 100%;
+        font-size: 15px;
+        color: var(--text-main);
+    }
+
+.btn-search-icon {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .btn-search-icon i {
+        width: 16px;
+        height: 16px;
+    }
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+#user-greeting {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.btn-logout {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    color: #ef4444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+    .btn-logout i {
+        width: 16px;
+        height: 16px;
+    }
+
+    .btn-logout:hover {
+        background: #fef2f2;
+        border-color: #fee2e2;
+    }
+
+/* Mapa */
+#map {
+    height: 380px;
+    width: 90%;
+    max-width: 1152px;
+    margin: 24px auto;
+    border-radius: 20px;
+    z-index: 1;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* Conteúdo */
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+/* Filtros por Chips */
+.filter-chips {
+    display: flex;
+    gap: 10px;
+}
+
+.chip {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+    .chip:hover {
+        border-color: var(--text-main);
+        color: var(--text-main);
+    }
+
+    .chip.active {
+        background: var(--text-main);
+        color: #ffffff;
+        border-color: var(--text-main);
+    }
+
+#counter {
+    color: var(--text-sub);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* Grid de Imóveis */
+.property-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.property-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .property-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08);
+    }
+
+.property-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.property-details {
+    padding: 16px;
+}
+
+    .property-details h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--text-main);
+    }
+
+.property-info-text {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin-bottom: 4px;
+}
+
+.property-price {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-top: 12px;
+}
+
+.btn-contact {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background: var(--bg-main);
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 15px;
+    transition: all 0.2s;
+}
+
+    .btn-contact:hover {
+        background: var(--primary-color);
+        color: #ffffff;
+    }

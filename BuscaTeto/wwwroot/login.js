@@ -19,13 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Resetar mensagens de erro a cada tentativa
-           if (loginInvalidMsg.style.display === 'none') {
-               loginInvalidMsg.style.display = 'block';
-           }
-           if (emailFormatError.style.display === 'none') {
-               emailFormatError.style.display = 'block';
-           }
+            // CORRIGIDO: Resetar mensagens de erro para ESCONDER ('none') a cada nova tentativa
+            loginInvalidMsg.style.display = 'none';
+            emailFormatError.style.display = 'none';
 
             // 1. Validação de formato de e-mail (Frontend)
             if (!emailInput.checkValidity()) {
@@ -51,13 +47,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     u.email === emailDigitado && u.senha === senhaDigitada
                 );
 
+                // --- DENTRO DA ÁREA DE SUCESSO DO SEU LOGIN.JS ---
                 if (usuarioEncontrado) {
                     console.log("Login autorizado!");
+
+                    // Guarda os dados na sessão do navegador
                     sessionStorage.setItem('usuarioId', usuarioEncontrado.id);
                     sessionStorage.setItem('usuarioNome', usuarioEncontrado.nome);
-                    window.location.href = "dashboard.html";
+                    sessionStorage.setItem('tipoUsuario', usuarioEncontrado.tipoUsuario);
+
+                    // LINKAGEM INTELIGENTE COM OS NOVOS ARQUIVOS:
+                    if (usuarioEncontrado.tipoUsuario === 'Anunciante') {
+                        window.location.href = "anunciante.html";
+                    } else {
+                        window.location.href = "cliente.html";
+                    }
+                }
+
                 } else {
-                    // Mostra a mensagem de "Login Inválido" no topo do card
+                    // Mostra a mensagem de "Login Inválido" no topo do card se as credenciais estiverem erradas
                     loginInvalidMsg.style.display = 'block';
                 }
 
