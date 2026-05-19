@@ -141,12 +141,12 @@ app.MapPost("/usuarios", async (AppDbContext db, CriarUsuarioRequest criar) =>
 {
     var criado = new Usuario
     {
-        Id = Guid.NewGuid(),
+        // Remova a linha do Id! O MySQL vai gerar o número 1, 2, 3... sozinho por causa do AUTO_INCREMENT
         Nome = criar.Nome,
         Email = criar.Email,
         Senha = criar.Senha,
         Telefone = criar.Telefone,
-        CriadoEm = DateTime.UtcNow
+        TipoUsuario = criar.TipoUsuario // 👈 Adicionamos o campo novo que veio do Front!
     };
 
     db.Usuarios.Add(criado);

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace BuscaTeto.Models
 {
@@ -10,16 +11,19 @@ namespace BuscaTeto.Models
         public string Nome { get; set; } = string.Empty;
 
         [Required]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
 
         [Required]
         public string Telefone { get; set; } = string.Empty;
 
-        // --- ADICIONE ESTA LINHA PARA A TABELA DO BANCO ---
         [Required]
         public string TipoUsuario { get; set; } = string.Empty;
 
         [Required]
         public string Senha { get; set; } = string.Empty;
+
+        // --- ADICIONADO: Propriedade para salvar a data de criação da conta ---
+        public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
     }
 }
