@@ -80,7 +80,8 @@ namespace BuscaTeto.Controllers
                 {
                     usuario = new Usuario
                     {
-                        Id = 1,
+                        // 👇 ALTERADO DE 1 PARA Guid.NewGuid() AQUI 👇
+                        Id = Guid.NewGuid(),
                         Nome = "Luiz",
                         Email = "teste@busca.com",
                         TipoUsuario = "Anunciante",
