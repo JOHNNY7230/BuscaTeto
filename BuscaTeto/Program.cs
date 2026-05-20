@@ -4,23 +4,21 @@ using BuscaTeto.Repositories;
 using BuscaTeto.Models;
 using BuscaTeto.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Http;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Força a API a escutar numa porta HTTP específica e limpa
 builder.WebHost.UseUrls("http://localhost:5005");
 
-// 1. Adicionar os serviços do Swagger 
+// 1. Adicionar os serviços necessários
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 🔥 ESSENCIAL: Ativa a leitura do seu arquivo UsuarioController.cs!
 builder.Services.AddControllers();
 
-// Configuração da Base de Dados (Entity Framework Core com MySQL) com Resiliência
+// Configuração da Base de Dados (Entity Framework Core com MySQL)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
@@ -46,13 +44,26 @@ app.UseCors();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Serve ficheiros estáticos na pasta wwwroot
-app.UseDefaultFiles();
+// 3. Configura o login.html como a página inicial padrão do sistema
+var options = new DefaultFilesOptions();
+options.DefaultFileNames.Clear();
+options.DefaultFileNames.Add("login.html");
+app.UseDefaultFiles(options);
+
+// Permite ler arquivos da pasta wwwroot
 app.UseStaticFiles();
 
+// Redireciona a raiz direto para o login
 app.MapGet("/", () => Results.Redirect("/login.html"));
 
-// Buscar imóveis filtrados
+// 🔥 ESSENCIAL: Mapeia as rotas do UsuarioController
+app.MapControllers();
+
+// =======================================================================
+// ROTAS DE IMÓVEIS (MINIMAL APIS) COM LÓGICA COMPLEXA DE SEGURANÇA
+// =======================================================================
+
+// 1. LISTAR IMÓVEIS COM FILTROS
 app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin, decimal? precoMax, int? quartosMin) =>
 {
     var query = db.Imoveis.Include(i => i.Endereco).AsQueryable();
@@ -70,14 +81,33 @@ app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin
     return Results.Ok(resultados);
 });
 
-// Guardar um novo imóvel na Base de Dados
+// 2. BUSCAR UM IMÓVEL PELO ID (INT) - Corrigido para evitar erro de Guid
+// Corrigido de Guid id para int id
+app.MapGet("/imoveis/{id}", async (AppDbContext db, int id) =>
+{
+    var imovel = await db.Imoveis.FindAsync(id);
+    return imovel is null ? Results.NotFound() : Results.Ok(imovel);
+});
+
+// 3. CADASTRAR IMÓVEL COM REGRA DE NEGÓCIO COMPLEXA (Controle de Perfil)
 app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
 {
-    var novoEnderecoId = Guid.NewGuid();
+    // REGRA DE NEGÓCIO 1: Verifica se o usuário que está tentando associar o imóvel realmente existe
+    var usuarioDono = await db.Usuarios.FindAsync(criar.UsuarioId);
+    if (usuarioDono == null)
+    {
+        return Results.BadRequest(new { mensagem = "Operação negada: O usuário vinculado a este cadastro não existe no sistema." });
+    }
 
+    // REGRA DE NEGÓCIO 2: Apenas contas cadastradas como 'Anunciante' podem postar imóveis
+    if (usuarioDono.TipoUsuario != "Anunciante")
+    {
+        return Results.Json(new { mensagem = "Acesso Negado: Apenas contas do tipo 'Anunciante' possuem permissão para publicar imóveis." }, statusCode: 403);
+    }
+
+    // Se passar pelas validações, o objeto é construído e salvo no MySQL Workbench local
     var criado = new Imovel
     {
-        Id = Guid.NewGuid(),
         Titulo = criar.Titulo,
         Descricao = criar.Descricao,
         Preco = criar.Preco,
@@ -101,75 +131,26 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
     db.Imoveis.Add(criado);
     await db.SaveChangesAsync();
 
-    return Results.Created($"/imoveis/{criado.Id}", criado);
+    return Results.Created($"/imoveis/{criado.Id}", new { mensagem = "Imóvel cadastrado com sucesso!", id = criado.Id, imovel = criado });
 });
 
-// Atualizar um imóvel existente
-app.MapPut("/imoveis/{id}", async (AppDbContext db, Guid id, AtualizarImovelRequest atualizar) =>
+// 4. ATUALIZAR UM IMÓVEL EXISTENTE COM PROTEÇÃO
+app.MapPut("/imoveis/{id}", async (AppDbContext db, int id, AtualizarImovelRequest atualizar) =>
 {
-    var imovel = await db.Imoveis.Include(i => i.Endereco).FirstOrDefaultAsync(i => i.Id == id);
-    if (imovel is null) return Results.NotFound();
+    var imovel = await db.Imoveis.FindAsync(id);
+    if (imovel is null) return Results.NotFound(new { mensagem = "Imóvel não encontrado." });
 
-    if (atualizar.Titulo != null) imovel.Titulo = atualizar.Titulo;
-    if (atualizar.Descricao != null) imovel.Descricao = atualizar.Descricao;
+    // Atualização segura: evita sobrescrever dados por campos nulos do formulário
+    if (!string.IsNullOrWhiteSpace(atualizar.Titulo)) imovel.Titulo = atualizar.Titulo;
+    if (!string.IsNullOrWhiteSpace(atualizar.Descricao)) imovel.Descricao = atualizar.Descricao;
+    if (!string.IsNullOrWhiteSpace(atualizar.Cidade)) imovel.Cidade = atualizar.Cidade;
 
-    if (atualizar.Cidade != null && imovel.Endereco != null)
-        imovel.Endereco.Cidade = atualizar.Cidade;
-
-    if (atualizar.Preco != null) imovel.Preco = atualizar.Preco.Value;
-    if (atualizar.Quartos != null) imovel.Quartos = atualizar.Quartos.Value;
-    if (atualizar.Imagem != null) imovel.Imagem = atualizar.Imagem;
+    if (atualizar.Preco.HasValue) imovel.Preco = atualizar.Preco.Value;
+    if (atualizar.Quartos.HasValue) imovel.Quartos = atualizar.Quartos.Value;
+    if (!string.IsNullOrWhiteSpace(atualizar.Imagem)) imovel.Imagem = atualizar.Imagem;
 
     await db.SaveChangesAsync();
-    return Results.NoContent();
-});
-
-// Buscar todos os utilizadores
-app.MapGet("/usuarios", async (AppDbContext db) =>
-{
-    var usuarios = await db.Usuarios.ToListAsync();
-    return Results.Ok(usuarios);
-});
-
-// Buscar um único utilizador pelo ID
-app.MapGet("/usuarios/{id}", async (AppDbContext db, Guid id) =>
-{
-    var usuario = await db.Usuarios.FindAsync(id);
-    return usuario is null ? Results.NotFound() : Results.Ok(usuario);
-});
-
-// Guardar um novo utilizador na Base de Dados
-app.MapPost("/usuarios", async (AppDbContext db, CriarUsuarioRequest criar) =>
-{
-    var criado = new Usuario
-    {
-        Id = Guid.NewGuid(),
-        Nome = criar.Nome,
-        Email = criar.Email,
-        Senha = criar.Senha,
-        Telefone = criar.Telefone,
-        TipoUsuario = criar.TipoUsuario
-    };
-
-    db.Usuarios.Add(criado);
-    await db.SaveChangesAsync();
-
-    return Results.Created($"/usuarios/{criado.Id}", criado);
-});
-
-// Atualizar um utilizador existente
-app.MapPut("/usuarios/{id}", async (AppDbContext db, Guid id, AtualizarUsuarioRequest atualizar) =>
-{
-    var usuario = await db.Usuarios.FindAsync(id);
-    if (usuario is null) return Results.NotFound();
-
-    if (atualizar.Nome != null) usuario.Nome = atualizar.Nome;
-    if (atualizar.Email != null) usuario.Email = atualizar.Email;
-    if (atualizar.Senha != null) usuario.Senha = atualizar.Senha;
-    if (atualizar.Telefone != null) usuario.Telefone = atualizar.Telefone;
-
-    await db.SaveChangesAsync();
-    return Results.NoContent();
+    return Results.Ok(new { mensagem = "Imóvel atualizado com segurança!" });
 });
 
 app.MapControllers();

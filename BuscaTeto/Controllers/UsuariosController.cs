@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using BuscaTeto.Models;
+using BuscaTeto.Data;
 using System;
 using System.Threading.Tasks;
-
 namespace BuscaTeto.Controllers
 {
     [ApiController]

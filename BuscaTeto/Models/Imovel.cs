@@ -1,43 +1,53 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BuscaTeto.Models
 {
     public class Imovel
     {
-        [Key]
-        public Guid Id { get; set; }
+        public int Id { get; set; } // Mudado de Guid para int!
 
         [Required]
-        [MaxLength(100)]
         public string Titulo { get; set; } = string.Empty;
 
-        [MaxLength(1000)]
         public string? Descricao { get; set; }
 
-        [Column(TypeName = "decimal(10,2)")]
+        [Required]
+        public string Logradouro { get; set; } = string.Empty;
+
+        [Required]
+        public string Numero { get; set; } = string.Empty;
+
+        [Required]
+        public string Bairro { get; set; } = string.Empty;
+
+        [Required]
+        public string Cidade { get; set; } = string.Empty;
+
+        [Required]
+        public string CEP { get; set; } = string.Empty;
+
+        [Required]
         public decimal Preco { get; set; }
 
+        [Required]
         public int Quartos { get; set; }
 
         public string? Imagem { get; set; }
 
-        // ==========================================
-        // RELACIONAMENTO COM USU√ÅRIO (J√° existente)
-        // ==========================================
-        public Guid UsuarioId { get; set; }
-        public Usuario? Usuario { get; set; }
+        [Required]
+        public Guid UsuarioId { get; set; } // Vinculado ao Dono do ImÛvel
 
         // ==========================================================
-        // RELACIONAMENTO COM ENDERE√áO (ADICIONE ESTE BLOCO AQUI!)
+        // RELACIONAMENTO COM ENDERE«O (ADICIONE ESTE BLOCO AQUI!)
         // ==========================================================
         [Required]
         public Guid EnderecoId { get; set; } // Representa o campo EnderecoId CHAR(36) no MySQL
 
         [ForeignKey("EnderecoId")]
-        public Endereco? Endereco { get; set; } // Propriedade de navega√ß√£o do Entity Framework
+        public Endereco? Endereco { get; set; } // Propriedade de navegaÁ„o do Entity Framework
 
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
     }
 }

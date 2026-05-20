@@ -1,25 +1,27 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using BuscaTeto.Models;
 
-namespace BuscaTeto.Models
+namespace BuscaTeto.Data
 {
-    public class CriarUsuarioRequest
+    public class AppDbContext : DbContext
     {
-        [Required(ErrorMessage = "O nome é obrigatório.")]
-        public string Nome { get; set; } = string.Empty;
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
 
-        [Required(ErrorMessage = "O e-mail é obrigatório.")]
-        [EmailAddress(ErrorMessage = "E-mail em formato inválido.")]
-        public string Email { get; set; } = string.Empty;
+        // Mapeia a classe Usuario para a tabela 'usuarios' do MySQL Workbench
+        public DbSet<Usuario> Usuarios { get; set; }
 
-        [Required(ErrorMessage = "O telefone é obrigatório.")]
-        public string Telefone { get; set; } = string.Empty;
+        // Mapeia a classe Imovel para a tabela 'imoveis' do MySQL Workbench
+        public DbSet<Imovel> Imoveis { get; set; }
 
-        // --- ADICIONE ESTA PROPRIEDADE AQUI ---
-        [Required(ErrorMessage = "O tipo de usuário é obrigatório.")]
-        public string TipoUsuario { get; set; } = string.Empty;
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-        [Required(ErrorMessage = "A senha é obrigatória.")]
-        [MinLength(6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres.")]
-        public string Senha { get; set; } = string.Empty;
+            // Garante que o EF Core procure as tabelas com os nomes exatos do banco local
+            modelBuilder.Entity<Usuario>().ToTable("usuarios");
+            modelBuilder.Entity<Imovel>().ToTable("imoveis");
+        }
     }
 }
