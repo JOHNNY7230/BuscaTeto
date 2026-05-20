@@ -105,6 +105,7 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
         return Results.Json(new { mensagem = "Acesso Negado: Apenas contas do tipo 'Anunciante' possuem permissão para publicar imóveis." }, statusCode: 403);
     }
 
+    Guid novoEnderecoId = default;
     // Se passar pelas validações, o objeto é construído e salvo no MySQL Workbench local
     var criado = new Imovel
     {

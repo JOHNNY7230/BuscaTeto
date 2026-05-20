@@ -25,5 +25,6 @@ namespace BuscaTeto.Models
 
         // --- ADICIONADO: Propriedade para salvar a data de criação da conta ---
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
     }
 }
