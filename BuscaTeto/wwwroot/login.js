@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // --- PARTE 2: LÓGICA DE LOGIN ---
+    // --- PARTE 2: LÓGICA DE LOGIN INTEGRADA COM O BACKEND ---
     const loginForm = document.getElementById('login-form');
     const emailInput = document.getElementById('user-email');
 
@@ -19,46 +19,58 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Resetar mensagens de erro a cada tentativa
-           if (loginInvalidMsg.style.display === 'none') {
-               loginInvalidMsg.style.display = 'block';
-           }
-           if (emailFormatError.style.display === 'none') {
-               emailFormatError.style.display = 'block';
-           }
+            // Resetar mensagens de erro a cada nova tentativa
+            loginInvalidMsg.style.display = 'none';
+            emailFormatError.style.display = 'none';
 
             // 1. Validação de formato de e-mail (Frontend)
             if (!emailInput.checkValidity()) {
                 emailFormatError.style.display = 'block';
-                return; // Para a execução aqui
+                return;
             }
 
             const emailDigitado = emailInput.value;
             const senhaDigitada = document.getElementById('user-pass').value;
 
+            // Cria o objeto exatamente como a classe LoginRequest do C# espera
+            const dadosLogin = {
+                email: emailDigitado,
+                senha: senhaDigitada
+            };
+
             try {
-                // 2. Busca a lista de usuários do backend C#
-                const response = await fetch('/usuarios');
+                // 2. Faz a requisição POST diretamente para o endpoint de login seguro
+                const response = await fetch('/usuarios/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dadosLogin)
+                });
 
-                if (!response.ok) {
-                    throw new Error("Erro ao consultar o servidor.");
-                }
+                // 3. Se as credenciais estiverem corretas (Status 200 OK)
+                if (response.ok) {
+                    const usuarioEncontrado = await response.json();
 
-                const usuarios = await response.json();
-
-                // 3. Verifica as credenciais
-                const usuarioEncontrado = usuarios.find(u =>
-                    u.email === emailDigitado && u.senha === senhaDigitada
-                );
-
-                if (usuarioEncontrado) {
                     console.log("Login autorizado!");
+
+                    // Guarda os dados retornados pelo C# na sessão do navegador
                     sessionStorage.setItem('usuarioId', usuarioEncontrado.id);
                     sessionStorage.setItem('usuarioNome', usuarioEncontrado.nome);
-                    window.location.href = "dashboard.html";
-                } else {
-                    // Mostra a mensagem de "Login Inválido" no topo do card
+                    sessionStorage.setItem('tipoUsuario', usuarioEncontrado.tipoUsuario);
+
+                    // 4. REDIRECIONAMENTO INTELIGENTE BASEADO NO PERFIL
+                    if (usuarioEncontrado.tipoUsuario === 'Anunciante') {
+                        window.location.href = "anunciante.html";
+                    } else {
+                        window.location.href = "cliente.html";
+                    }
+
+                } else if (response.status === 401) {
+                    // Se o back-end responder com 401 (Não autorizado), mostra o erro na tela
                     loginInvalidMsg.style.display = 'block';
+                } else {
+                    alert("Ocorreu um problema inesperado no servidor.");
                 }
 
             } catch (error) {

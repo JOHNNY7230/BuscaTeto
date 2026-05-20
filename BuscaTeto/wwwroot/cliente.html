@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuscaTeto | Explorar Imóveis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="cliente.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">🏠 Busca<span>Teto</span></div>
+
+            <div class="search-pill">
+                <input type="text" id="search-input" placeholder="Onde você quer morar?">
+                <button class="btn-search-icon" id="btn-buscar"><i data-lucide="search"></i></button>
+            </div>
+
+            <div class="nav-user">
+                <span id="user-greeting">Olá, Cliente!</span>
+                <button class="btn-logout" id="btn-sair-cliente"><i data-lucide="log-out"></i> Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="map"></div>
+
+    <main class="main-content">
+        <div class="content-header">
+            <div class="filter-chips">
+                <button class="chip active" data-type="">Todos</button>
+                <button class="chip" data-type="Apartamento">Apartamentos</button>
+                <button class="chip" data-type="Casa">Casas</button>
+                <button class="chip" data-type="Studio">Studios</button>
+            </div>
+            <p id="counter">Buscando imóveis disponíveis...</p>
+        </div>
+
+        <div class="property-grid" id="property-list">
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Inicializa os ícones do Lucide
+        lucide.createIcons();
+    </script>
+    <script src="cliente.js"></script>
+</body>
+</html>

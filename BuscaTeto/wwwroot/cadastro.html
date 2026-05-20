@@ -1,69 +1,81 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-br">
-	<head>
-		<meta charset="UTF-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-		<title>BuscaTeto | Criar Conta</title>
-		<link rel="stylesheet" href="cadastro.css"/>
-		<script src="https://unpkg.com/lucide@latest"></script>
-	</head>
-	<body>
-		<main class="main-container">
-			<section class="content-box">
-				<header class="header">
-					<h1>Crie sua conta</h1>
-					<p>Preencha os campos para acessar a plataforma.</p>
-				</header>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BuscaTeto | Criar Conta</title>
+    <link rel="stylesheet" href="cadastro.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <main class="main-container">
+        <section class="content-box">
+            <header class="header">
+                <h1>Crie sua conta</h1>
+                <p>Preencha os campos para acessar a plataforma.</p>
+            </header>
 
-				<form id="formCadastro" class="form">
-					<div class="input-group">
-						<label for="nome">Nome completo</label>
-						<div class="input-wrapper">
-							<i data-lucide="user"></i>
-							<input type="text" id="nome" placeholder="Seu nome" required="required"/>
-						</div>
-					</div>
+            <form id="formCadastro" class="form">
+                <div class="input-group">
+                    <label for="nome">Nome completo</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="nome" placeholder="Seu nome" required="required" />
+                    </div>
+                </div>
 
-					<div class="input-group">
-						<label for="email">Seu e-mail</label>
-						<div class="input-wrapper">
-							<i data-lucide="mail"></i>
-							<input type="email" id="email" placeholder="seuemail@exemplo.com" required="required"/>
-						</div>
-					</div>
+                <div class="input-group">
+                    <label for="email">Seu e-mail</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="email" placeholder="seuemail@exemplo.com" required="required" />
+                    </div>
+                </div>
 
-					<div class="input-group">
-						<label for="telefone">Telefone</label>
-						<div class="input-wrapper">
-							<i data-lucide="phone"></i>
-							<input type="text" id="telefone" placeholder="(00) 00000-0000" required="required"/>
-						</div>
-					</div>
+                <div class="input-group">
+                    <label for="telefone">Telefone</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="phone"></i>
+                        <input type="text" id="telefone" placeholder="(00) 00000-0000" required="required" />
+                    </div>
+                </div>
 
-					<div class="input-group">
-						<label for="senha">Sua senha</label>
-						<div class="input-wrapper">
-							<i data-lucide="lock"></i>
-							<input type="password" id="senha" placeholder="••••••••" required="required"/>
-						</div>
-					</div>
+                <div class="input-group">
+                    <label for="tipoUsuario">Tipo de Conta</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="users"></i>
+                        <select id="tipoUsuario" required="required">
+                            <option value="" disabled="disabled" selected="selected">O que você deseja fazer?</option>
+                            <option value="Cliente">Quero alugar imóveis (Usuário Comum)</option>
+                            <option value="Anunciante">Quero anunciar imóveis (Anunciante)</option>
+                        </select>
+                    </div>
+                </div>
 
-					<button type="submit" class="btn-submit">
-						Criar Conta <i data-lucide="arrow-right"></i>
-					</button>
-				</form>
+                <div class="input-group">
+                    <label for="senha">Sua senha</label>
+                    <div class="input-wrapper">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="senha" placeholder="••••••••" required="required" />
+                    </div>
+                </div>
 
-				<footer class="footer">
-					<span>Já tem uma conta?</span>
-					<a href="index.html">Faça login</a>
-				</footer>
-			</section>
-		</main>
+                <button type="submit" class="btn-submit">
+                    Criar Conta <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
 
-		<script>
-			// Inicializa os ícones do Lucide após o carregamento da página
-			lucide.createIcons();
-		</script>
-		<script src="cadastro.js"></script>
-	</body>
+            <footer class="footer">
+                <span>Já tem uma conta?</span>
+                <a href="login.html">Faça login</a>
+            </footer>
+        </section>
+    </main>
+
+    <script>
+        // Inicializa os ícones do Lucide após o carregamento da página
+        lucide.createIcons();
+    </script>
+    <script src="cadastro.js"></script>
+</body>
 </html>
