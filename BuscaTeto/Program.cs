@@ -38,7 +38,6 @@ builder.Services.AddCors(options => {
 });
 
 var app = builder.Build();
-
 app.UseCors();
 
 // 2. Ativar a interface visual do Swagger
@@ -67,10 +66,10 @@ app.MapControllers();
 // 1. LISTAR IMÓVEIS COM FILTROS
 app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin, decimal? precoMax, int? quartosMin) =>
 {
-    var query = db.Imoveis.AsQueryable();
+    var query = db.Imoveis.Include(i => i.Endereco).AsQueryable();
 
     if (!string.IsNullOrWhiteSpace(cidade))
-        query = query.Where(i => i.Cidade.Contains(cidade));
+        query = query.Where(i => i.Endereco != null && i.Endereco.Cidade.Contains(cidade));
     if (precoMin.HasValue)
         query = query.Where(i => i.Preco >= precoMin.Value);
     if (precoMax.HasValue)
@@ -111,16 +110,22 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
     {
         Titulo = criar.Titulo,
         Descricao = criar.Descricao,
-        Logradouro = criar.Logradouro,
-        Numero = criar.Numero,
-        Bairro = criar.Bairro,
-        Cidade = criar.Cidade,
-        CEP = criar.CEP,
         Preco = criar.Preco,
         Quartos = criar.Quartos,
         Imagem = criar.Imagem,
-        UsuarioId = criar.UsuarioId,
-        CriadoEm = DateTime.UtcNow
+        UsuarioId = criar.UsuarioId, // Mapeado como Guid corretamente
+        CriadoEm = DateTime.UtcNow,
+
+        EnderecoId = novoEnderecoId,
+        Endereco = new Endereco
+        {
+            Id = novoEnderecoId,
+            Logradouro = criar.Logradouro,
+            Numero = criar.Numero,
+            Bairro = criar.Bairro,
+            Cidade = criar.Cidade,
+            CEP = criar.CEP
+        }
     };
 
     db.Imoveis.Add(criado);
@@ -148,4 +153,38 @@ app.MapPut("/imoveis/{id}", async (AppDbContext db, int id, AtualizarImovelReque
     return Results.Ok(new { mensagem = "Imóvel atualizado com segurança!" });
 });
 
+app.MapControllers();
+
 app.Run();
+
+// =========================================================================
+// CLASSES DE CONTEXTO E TRANSFERÊNCIA DE DADOS (RECORDS)
+// =========================================================================
+public record CriarImovelRequest(
+    string Titulo,
+    string? Descricao,
+    decimal Preco,
+    int Quartos,
+    string? Imagem,
+    Guid UsuarioId, // Voltou para Guid para casar com Imovel.cs
+    string Logradouro,
+    string? Numero,
+    string? Bairro,
+    string Cidade,
+    string CEP
+);
+
+public record RespostaImovelDto(
+    Guid Id,
+    string Titulo,
+    string? Descricao,
+    decimal Preco,
+    int Quartos,
+    string? Imagem,
+    Guid UsuarioId,
+    string Cidade
+);
+
+public record AtualizarImovelRequest(string? Titulo, string? Descricao, string? Cidade, decimal? Preco, int? Quartos, string? Imagem);
+public record CriarUsuarioRequest(string Nome, string Email, string Senha, string Telefone, string TipoUsuario);
+public record AtualizarUsuarioRequest(string? Nome, string? Email, string? Senha, string? Telefone);

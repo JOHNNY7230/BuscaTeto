@@ -97,6 +97,7 @@ function renderizar(lista) {
 // ==========================================
 // 4. EVENTO DE CADASTRO (POST)
 // ==========================================
+const addForm = document.getElementById('form-add-property') || document.getElementById('modal-form');
 
 if (addForm) {
     addForm.onsubmit = async (e) => {
@@ -108,18 +109,35 @@ if (addForm) {
             return;
         }
 
+        const usuarioLogadoId = sessionStorage.getItem('usuarioId');
+        if (!usuarioLogadoId) {
+            alert("Erro: Você precisa estar logado para anunciar um imóvel!");
+            window.location.href = "index.html";
+            return;
+        }
+
         const reader = new FileReader();
         reader.onloadend = async function () {
+            // Montando o objeto com proteções para não quebrar a sintaxe
             const novoImovel = {
-                titulo: document.getElementById('title').value,
-                descricao: document.getElementById('details').value,
-                cidade: document.getElementById('address').value,
-                preco: parseFloat(document.getElementById('price').value),
-                quartos: parseInt(document.getElementById('quartos')?.value || 0),
-                tipo: document.getElementById('type').value, // Adicionado o tipo
+                titulo: document.getElementById('title')?.value || "",
+                descricao: document.getElementById('details')?.value || "",
+                preco: parseFloat(document.getElementById('price')?.value || "0"),
+                quartos: parseInt(document.getElementById('quartos')?.value || "0"),
+                tipo: document.getElementById('type')?.value || "Casa",
                 imagem: reader.result,
-                usuarioId: "00000000-0000-0000-0000-000000000000"
+                usuarioId: usuarioLogadoId,
+
+                // Campos que o C# e o MySQL precisam para a tabela Enderecos
+                logradouro: document.getElementById('logradouro')?.value || "Não informado",
+                numero: document.getElementById('numero')?.value || "S/N",
+                bairro: document.getElementById('bairro')?.value || "Centro",
+                cidade: document.getElementById('address')?.value || "",
+                cep: document.getElementById('cep')?.value || "00000-000"
             };
+
+            // MOSTRAR NO CONSOLE (Sem quebrar a página)
+            console.log("DADOS ENVIADOS:", novoImovel);
 
             try {
                 const response = await fetch('/imoveis', {
@@ -134,10 +152,12 @@ if (addForm) {
                     closeModal();
                     addForm.reset();
                 } else {
-                    alert("Erro ao salvar no servidor.");
+                    const erroTexto = await response.text();
+                    console.error("Erro do servidor C#:", erroTexto);
+                    alert("O servidor recusou o anúncio: " + erroTexto);
                 }
             } catch (error) {
-                console.error("Erro:", error);
+                console.error("Erro de conexão:", error);
             }
         };
         reader.readAsDataURL(file);

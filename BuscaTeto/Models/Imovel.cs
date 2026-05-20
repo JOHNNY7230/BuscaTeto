@@ -38,6 +38,15 @@ namespace BuscaTeto.Models
         [Required]
         public Guid UsuarioId { get; set; } // Vinculado ao Dono do Imóvel
 
+        // ==========================================================
+        // RELACIONAMENTO COM ENDEREÇO (ADICIONE ESTE BLOCO AQUI!)
+        // ==========================================================
+        [Required]
+        public Guid EnderecoId { get; set; } // Representa o campo EnderecoId CHAR(36) no MySQL
+
+        [ForeignKey("EnderecoId")]
+        public Endereco? Endereco { get; set; } // Propriedade de navegação do Entity Framework
+
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     }
