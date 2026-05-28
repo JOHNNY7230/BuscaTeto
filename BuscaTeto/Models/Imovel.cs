@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
 namespace BuscaTeto.Models
@@ -33,18 +34,17 @@ namespace BuscaTeto.Models
         [Required]
         public int Quartos { get; set; }
 
+        public string StatusPagamento { get; set; } = "Pendente";
+
         public string? Imagem { get; set; }
 
         [Required]
-        public Guid UsuarioId { get; set; } // Vinculado ao Dono do Imóvel
+        public string UsuarioId { get; set; } // Vinculado ao Dono do Imóvel
 
         // ==========================================================
         // RELACIONAMENTO COM ENDEREÇO (ADICIONE ESTE BLOCO AQUI!)
         // ==========================================================
-        [Required]
-        public Guid EnderecoId { get; set; } // Representa o campo EnderecoId CHAR(36) no MySQL
-
-        public Endereco? Endereco { get; set; } // Propriedade de navegação do Entity Framework
+      
 
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 

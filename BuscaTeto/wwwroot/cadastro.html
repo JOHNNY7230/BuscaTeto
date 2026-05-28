@@ -41,14 +41,27 @@
                 </div>
 
                 <div class="input-group">
-                    <label for="tipoUsuario">Tipo de Conta</label>
-                    <div class="input-wrapper">
-                        <i data-lucide="users"></i>
-                        <select id="tipoUsuario" required="required">
-                            <option value="" disabled="disabled" selected="selected">O que você deseja fazer?</option>
-                            <option value="Cliente">Quero alugar imóveis (Usuário Comum)</option>
-                            <option value="Anunciante">Quero anunciar imóveis (Anunciante)</option>
-                        </select>
+                    <label>Tipo de Conta</label>
+                    <div class="account-type-selector">
+
+                        <label class="type-card">
+                            <input type="radio" name="tipoUsuario" value="Cliente" required="required">
+                            <div class="card-content">
+                                <i data-lucide="home"></i>
+                                <span class="card-title">Quero Alugar</span>
+                                <span class="card-desc">Sou um usuário comum</span>
+                            </div>
+                        </label>
+
+                        <label class="type-card">
+                            <input type="radio" name="tipoUsuario" value="Anunciante" required="required">
+                            <div class="card-content">
+                                <i data-lucide="key"></i>
+                                <span class="card-title">Quero Anunciar</span>
+                                <span class="card-desc">Sou proprietário</span>
+                            </div>
+                        </label>
+
                     </div>
                 </div>
 

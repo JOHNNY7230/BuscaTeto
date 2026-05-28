@@ -8,7 +8,7 @@ namespace BuscaTeto.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-
+        public DbSet<Endereco> Enderecos { get; set; }
         // Mapeia a classe Usuario para a tabela 'usuarios' do MySQL Workbench
         public DbSet<Usuario> Usuarios { get; set; }
 

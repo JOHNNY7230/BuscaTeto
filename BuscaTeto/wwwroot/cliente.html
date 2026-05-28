@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuscaTeto | Explorar Imóveis</title>
+    <title>BuscaTeto | Encontre seu novo lar</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="cliente.css">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -15,40 +16,72 @@
         <div class="nav-container">
             <div class="logo">🏠 Busca<span>Teto</span></div>
 
-            <div class="search-pill">
-                <input type="text" id="search-input" placeholder="Onde você quer morar?">
-                <button class="btn-search-icon" id="btn-buscar"><i data-lucide="search"></i></button>
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="switchTab('explorar')">
+                    <i data-lucide="map"></i> Explorar
+                </button>
+                <button class="tab-btn" onclick="switchTab('favoritos')">
+                    <i data-lucide="heart"></i> Meus Favoritos
+                </button>
             </div>
 
             <div class="nav-user">
-                <span id="user-greeting">Olá, Cliente!</span>
-                <button class="btn-logout" id="btn-sair-cliente"><i data-lucide="log-out"></i> Sair</button>
+                <span id="user-greeting" style="font-weight: 600;">Olá, Cliente!</span>
+                <button class="btn-logout" id="btn-sair-cliente" onclick="window.location.href='login.html'">
+                    <i data-lucide="log-out" style="width: 18px; height: 18px;"></i> Sair
+                </button>
             </div>
         </div>
     </nav>
 
-    <div id="map"></div>
-
     <main class="main-content">
-        <div class="content-header">
-            <div class="filter-chips">
-                <button class="chip active" data-type="">Todos</button>
-                <button class="chip" data-type="Apartamento">Apartamentos</button>
-                <button class="chip" data-type="Casa">Casas</button>
-                <button class="chip" data-type="Studio">Studios</button>
-            </div>
-            <p id="counter">Buscando imóveis disponíveis...</p>
-        </div>
 
-        <div class="property-grid" id="property-list">
-        </div>
+        <section id="tab-explorar" class="tab-content active">
+
+            <div class="map-wrapper">
+                <div id="map"></div>
+            </div>
+
+            <div class="content-header">
+                <div class="search-and-filters">
+                    <div class="search-pill">
+                        <i data-lucide="search" style="color: var(--text-gray);"></i>
+                        <input type="text" id="search-input" placeholder="Buscar por título ou palavra-chave..." onkeyup="filtrarTudo()">
+                    </div>
+
+                    <select id="filtro-regiao" class="region-select" onchange="filtrarTudo()">
+                        <option value="">Todas as regiões</option>
+                    </select>
+                </div>
+
+                <div class="flex-between" style="margin-top: 20px;">
+                    <div class="filter-chips">
+                        <button class="chip active" onclick="filtrarTipo('')">Todos</button>
+                        <button class="chip" onclick="filtrarTipo('Apartamento')">Apartamentos</button>
+                        <button class="chip" onclick="filtrarTipo('Casa')">Casas</button>
+                        <button class="chip" onclick="filtrarTipo('Studio')">Studios</button>
+                    </div>
+                    <p id="counter">Buscando imóveis...</p>
+                </div>
+            </div>
+
+            <div class="property-grid" id="property-list">
+            </div>
+        </section>
+
+        <section id="tab-favoritos" class="tab-content">
+            <div class="content-header" style="margin-top: 20px;">
+                <h2>Meus Imóveis Favoritos ❤️</h2>
+                <p>Aqui estão os lugares que você separou para olhar com calma.</p>
+            </div>
+
+            <div class="property-grid" id="favorites-list">
+            </div>
+        </section>
+
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // Inicializa os ícones do Lucide
-        lucide.createIcons();
-    </script>
     <script src="cliente.js"></script>
 </body>
 </html>

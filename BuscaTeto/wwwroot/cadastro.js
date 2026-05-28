@@ -21,7 +21,7 @@
             nome: document.getElementById('nome').value,
             email: document.getElementById('email').value,
             telefone: inputTelefone.value,
-            tipoUsuario: document.getElementById('tipoUsuario').value,
+            tipoUsuario: document.querySelector('input[name="tipoUsuario"]:checked')?.value,
             senha: document.getElementById('senha').value
         };
 
@@ -31,56 +31,35 @@
             return;
         }
 
-        // Garante que o usuário selecionou uma opção válida no select
+   // Garante que o usuário selecionou uma opção válida no select (Apagamos o 0591 daqui!)
         if (!usuario.tipoUsuario) {
             alert('Por favor, selecione se deseja ser Cliente ou Anunciante.');
             return;
         }
 
         // ========================================================
-        // 🛠️ MODO SIMULAÇÃO (Para testar o Front-end sem o Banco)
+        // 🌍 ENVIANDO DADOS PARA A API C# (Salvando no MySQL real)
         // ========================================================
         try {
-            console.log("Dados capturados no Front (Seriam enviados ao MySQL):", usuario);
-
-            // Salvamos os dados de teste no navegador para o login conseguir ler depois
-            sessionStorage.setItem('usuarioFicticioEmail', usuario.email);
-            sessionStorage.setItem('usuarioFicticioSenha', usuario.senha);
-            sessionStorage.setItem('usuarioFicticioNome', usuario.nome);
-            sessionStorage.setItem('usuarioFicticioTipo', usuario.tipoUsuario);
-
-            alert(`Conta de ${usuario.tipoUsuario} criada com sucesso (Modo Teste)!`);
-
-            // Redireciona para o arquivo de login (Se a sua tela for index.html ou login.html)
-            // IMPORTANTE: Ajuste o nome abaixo para o arquivo real da sua tela de login se necessário
-            window.location.href = 'index.html?cadastrado=true';
-
-        } catch (error) {
-            console.error('Erro na simulação:', error);
-            alert('Erro ao processar o cadastro fictício.');
-        }
-
-        // ========================================================
-        // 🌍 CÓDIGO DO FETCH COM A API (Comentado até o Back-end ficar pronto)
-        // ========================================================
-        /*
-        try {
-            const response = await fetch('/usuarios', {
+            // 🔥 MUDANÇA AQUI: Endereço completo apontando para o C# na porta 5005!
+            // (Usando /api/usuarios para bater com o padrão do UsuariosController)
+            const response = await fetch('api/usuarios', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(usuario)
             });
 
             if (response.ok) {
-                window.location.href = 'index.html?cadastrado=true';
+                alert('Usuário cadastrado com sucesso!');
+                // Redireciona direto para a página de login que existe na sua wwwroot
+                window.location.href = 'login.html';
             } else {
                 const erroTexto = await response.text();
                 alert('Erro ao cadastrar: ' + erroTexto);
             }
         } catch (error) {
             console.error('Erro:', error);
-            alert('Erro de conexão com o servidor.');
+            alert('Erro de conexão com o servidor. Verifique se o C# está rodando.');
         }
-        */
     });
 });

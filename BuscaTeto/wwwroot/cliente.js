@@ -1,5 +1,19 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-    // 1. Controle de Segurança do Perfil
+﻿// ==========================================
+// 1. VARIÁVEIS GLOBAIS E CONFIGURAÇÕES
+// ==========================================
+const MEU_WHATSAPP = "5531987410591";
+let todosImoveis = [];
+let map;
+let markersArray = []; // Guarda os pinos do mapa para podermos limpar depois
+let filtroTipoAtual = "";
+
+// Resgata os favoritos salvos no navegador (se não tiver nada, cria um array vazio)
+let favoritosIds = JSON.parse(localStorage.getItem('favoritosBuscaTeto')) || [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // ==========================================
+    // 2. CONTROLE DE SEGURANÇA E SESSÃO
+    // ==========================================
     const tipoUsuario = sessionStorage.getItem('tipoUsuario');
     const usuarioNome = sessionStorage.getItem('usuarioNome');
 
@@ -9,7 +23,7 @@
         return;
     }
 
-    // Altera o texto de boas-vindas
+    // Saudação personalizada
     document.getElementById('user-greeting').textContent = `Olá, ${usuarioNome}!`;
 
     // Botão Sair
@@ -18,86 +32,206 @@
         window.location.href = "login.html";
     });
 
-    // 2. Banco de Dados Simulado (Mock) de Imóveis
-    const listaImoveis = [
-        { id: 1, titulo: "Apartamento Vista Mar", tipo: "Apartamento", preco: "2.400", local: "Centro", desc: "2 qtos, Varanda, 65m²", img: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=500", lat: -19.92, lng: -43.94 },
-        { id: 2, titulo: "Casa Confortável", tipo: "Casa", preco: "3.100", local: "Bairro Novo", desc: "3 qtos, Quintal amplo", img: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=500", lat: -19.93, lng: -43.93 },
-        { id: 3, titulo: "Studio Compacto", tipo: "Studio", preco: "1.600", local: "Savassi", desc: "Mobiliado, Cozinha integrada", img: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=500", lat: -19.94, lng: -43.92 }
-    ];
+    // ==========================================
+    // 3. INICIALIZAÇÃO
+    // ==========================================
+    inicializarMapa();
+    lucide.createIcons(); // Carrega os ícones bonitões (coração, lupa, etc)
 
-    let filtroTipoAtual = "";
-    const searchInput = document.getElementById('search-input');
-    const propertyGrid = document.getElementById('property-list');
-    const counterText = document.getElementById('counter');
+    // Busca os imóveis reais do C# (substitui o antigo Mock)
+    await carregarImoveis();
+});
 
-    // 3. Inicialização do Mapa Leaflet
-    const map = L.map('map').setView([-19.928, -43.941], 13); // Centralizado em exemplo genérico (BH)
+// ==========================================
+// 4. LÓGICA DO MAPA LEAFLET
+// ==========================================
+function inicializarMapa() {
+    map = L.map('map').setView([-19.9167, -43.9345], 12); // Centro de BH
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
+}
 
-    // Guardar marcadores ativos para limpar e refazer no filtro
-    let markersArray = [];
+// ==========================================
+// 5. COMUNICAÇÃO COM O C# E PREPARAÇÃO DOS DADOS
+// ==========================================
+async function carregarImoveis() {
+    try {
+        const response = await fetch('/imoveis');
+        if (response.ok) {
+            todosImoveis = await response.json();
 
-    // 4. Função para Renderizar os Cards e Marcadores do Mapa
-    function renderizarImoveis() {
-        // Limpa a tela e os marcadores antigos do mapa
-        propertyGrid.innerHTML = "";
+            popularFiltroRegiao(todosImoveis);
+            renderizarImoveis(todosImoveis, 'property-list'); // Renderiza aba Explorar
+            renderizarFavoritos(); // Renderiza aba Favoritos
+        } else {
+            console.error("Erro ao buscar imóveis do servidor");
+            document.getElementById('property-list').innerHTML = "<p>Erro ao carregar os imóveis do servidor.</p>";
+        }
+    } catch (error) {
+        console.error("Erro de conexão:", error);
+    }
+}
+
+// Pega as cidades/bairros que vieram do banco e joga no <select> automaticamente
+function popularFiltroRegiao(lista) {
+    const select = document.getElementById('filtro-regiao');
+    if (!select) return;
+
+    // Filtra para pegar apenas os nomes de cidades sem repetir
+    const regioesUnicas = [...new Set(lista.map(i => i.cidade).filter(c => c))];
+
+    regioesUnicas.forEach(regiao => {
+        select.innerHTML += `<option value="${regiao}">${regiao}</option>`;
+    });
+}
+
+// ==========================================
+// 6. RENDERIZAÇÃO DOS CARDS E PINOS NO MAPA
+// ==========================================
+function renderizarImoveis(lista, containerId) {
+    const grid = document.getElementById(containerId);
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    // Se estivermos atualizando a tela principal, limpa os pinos velhos do mapa e atualiza o contador
+    if (containerId === 'property-list') {
         markersArray.forEach(marker => map.removeLayer(marker));
         markersArray = [];
-
-        const termoPesquisa = searchInput.value.toLowerCase();
-
-        // Aplica o filtro combinado (Busca por texto + Chip selecionado)
-        const imoveisFiltrados = listaImoveis.filter(imovel => {
-            const matchesTexto = imovel.titulo.toLowerCase().includes(termoPesquisa) || imovel.local.toLowerCase().includes(termoPesquisa);
-            const matchesTipo = filtroTipoAtual === "" || imovel.tipo === filtroTipoAtual;
-            return matchesTexto && matchesTipo;
-        });
-
-        // Atualiza contador
-        counterText.textContent = `${imoveisFiltrados.length} imóvel(is) encontrado(s)`;
-
-        // Gera os elementos no HTML e Marcadores
-        imoveisFiltrados.forEach(imovel => {
-            // Cria o Card Visual
-            const card = document.createElement('div');
-            card.className = 'property-card';
-            card.innerHTML = `
-                <img src="${imovel.img}" alt="${imovel.titulo}" class="property-img">
-                <div class="property-details">
-                    <h3>${imovel.titulo}</h3>
-                    <p class="property-info-text">📍 ${imovel.local} | 🏠 ${imovel.tipo}</p>
-                    <p class="property-info-text">${imovel.desc}</p>
-                    <p class="property-price">R$ ${imovel.preco} / mês</p>
-                    <a href="https://wa.me/5531987410591" target="_blank" class="btn-contact">Contatar Locador</a>
-                </div>
-            `;
-            propertyGrid.appendChild(card);
-
-            // Cria o Pin correspondente no Mapa
-            const marker = L.marker([imovel.lat, imovel.lng]).addTo(map)
-                .bindPopup(`<b>${imovel.titulo}</b><br>R$ ${imovel.preco}/mês`);
-            markersArray.push(marker);
-        });
+        document.getElementById('counter').innerText = `${lista.length} imóvel(is) encontrado(s)`;
     }
 
-    // 5. Ouvintes de Evento (Inputs e Chips)
-    searchInput.addEventListener('input', renderizarImoveis);
+    if (lista.length === 0) {
+        grid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-gray);">Nenhum imóvel disponível com esses filtros.</p>`;
+        return;
+    }
 
-    const chips = document.querySelectorAll('.chip');
-    chips.forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            // Alterna classe active nos chips
-            chips.forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
+    lista.forEach(imovel => {
+        // --- LÓGICA DO MAPA (Apenas na aba principal) ---
+        if (containerId === 'property-list') {
+            // Se não vier coordenada do C#, criamos uma leve variação em volta de BH para não empilhar os pinos
+            const lat = imovel.latitude || (-19.9167 + (Math.random() * 0.05 - 0.025));
+            const lng = imovel.longitude || (-43.9345 + (Math.random() * 0.05 - 0.025));
 
-            // Filtra e renderiza novamente
-            filtroTipoAtual = e.target.getAttribute('data-type');
-            renderizarImoveis();
-        });
+            const marker = L.marker([lat, lng]).addTo(map)
+                .bindPopup(`<b>${imovel.titulo}</b><br>R$ ${imovel.preco.toLocaleString('pt-BR')}/mês`);
+
+            // Clicou no pino, rola a página até o card
+            marker.on('click', () => {
+                const card = document.getElementById(`card-${imovel.id}`);
+                if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+
+            markersArray.push(marker);
+        }
+
+        // --- LÓGICA DO CARD E FAVORITOS ---
+        // Verifica se o ID deste imóvel está salvo no array de favoritos
+        const isFav = favoritosIds.includes(imovel.id) ? 'favoritado' : '';
+        const bgImg = imovel.imagem ? `url('${imovel.imagem}')` : 'none';
+        const bgColor = imovel.imagem ? 'transparent' : '#CBD5E1';
+
+        const mensagem = encodeURIComponent(`Olá! Vi o anúncio "${imovel.titulo}" no BuscaTeto e tenho interesse em alugar.`);
+        const linkWhats = `https://wa.me/${MEU_WHATSAPP}?text=${mensagem}`;
+
+        // Cria o HTML do Card
+        const cardHTML = `
+            <div class="property-card" id="card-${imovel.id}">
+                <div class="property-img" style="background-image: ${bgImg}; background-color: ${bgColor}; background-size: cover; background-position: center;">
+                    <span class="status-badge">${imovel.tipo || 'Imóvel'}</span>
+                    
+                    <button class="btn-fav ${isFav}" onclick="toggleFavorito(${imovel.id})">
+                        <i data-lucide="heart" style="width: 20px; height: 20px;"></i>
+                    </button>
+                </div>
+                <div class="property-info">
+                    <span class="price">R$ ${imovel.preco.toLocaleString('pt-BR')}/mês</span>
+                    <h3 class="title">${imovel.titulo}</h3>
+                    <p class="address"><i data-lucide="map-pin" style="width: 16px; height: 16px;"></i> ${imovel.cidade || 'Não informado'}</p>
+                    <a href="${linkWhats}" target="_blank" class="btn-whatsapp">
+                        Chamar no WhatsApp
+                    </a>
+                </div>
+            </div>
+        `;
+        grid.innerHTML += cardHTML;
     });
 
-    // Primeira renderização ao carregar a página
-    renderizarImoveis();
-});
+    // Se tiver imóveis, ajusta a câmera do mapa para englobar todos eles
+    if (containerId === 'property-list' && lista.length > 0) {
+        const group = new L.featureGroup(markersArray);
+        map.fitBounds(group.getBounds().pad(0.1));
+    }
+
+    lucide.createIcons(); // Recarrega os ícones para os botões novos
+}
+
+// ==========================================
+// 7. SISTEMA DE FILTROS CRUZADOS
+// ==========================================
+window.filtrarTipo = function (tipo) {
+    filtroTipoAtual = tipo;
+
+    // Atualiza a cor do botão ativo
+    document.querySelectorAll('.chip').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    aplicarFiltrosGlobais();
+}
+
+window.filtrarTudo = function () {
+    aplicarFiltrosGlobais();
+}
+
+function aplicarFiltrosGlobais() {
+    const textoBusca = document.getElementById('search-input').value.toLowerCase();
+    const regiaoBusca = document.getElementById('filtro-regiao')?.value || "";
+
+    const imoveisFiltrados = todosImoveis.filter(imovel => {
+        const matchesTexto = imovel.titulo.toLowerCase().includes(textoBusca) || (imovel.cidade && imovel.cidade.toLowerCase().includes(textoBusca));
+        const matchesRegiao = regiaoBusca === "" || imovel.cidade === regiaoBusca;
+        const matchesTipo = filtroTipoAtual === "" || imovel.tipo === filtroTipoAtual;
+
+        return matchesTexto && matchesRegiao && matchesTipo;
+    });
+
+    renderizarImoveis(imoveisFiltrados, 'property-list');
+}
+
+// ==========================================
+// 8. SISTEMA DE FAVORITOS E NAVEGAÇÃO DE ABAS
+// ==========================================
+window.toggleFavorito = function (id) {
+    if (favoritosIds.includes(id)) {
+        favoritosIds = favoritosIds.filter(favId => favId !== id); // Remove
+    } else {
+        favoritosIds.push(id); // Adiciona
+    }
+
+    // Salva a alteração direto no navegador
+    localStorage.setItem('favoritosBuscaTeto', JSON.stringify(favoritosIds));
+
+    // Renderiza tudo de novo para atualizar as cores dos corações
+    aplicarFiltrosGlobais();
+    renderizarFavoritos();
+}
+
+function renderizarFavoritos() {
+    const meusFavoritos = todosImoveis.filter(imovel => favoritosIds.includes(imovel.id));
+    renderizarImoveis(meusFavoritos, 'favorites-list');
+}
+
+// Alterna entre a aba Explorar e a aba Favoritos
+window.switchTab = function (tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById('tab-' + tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+
+    // Corrige um bug clássico do Leaflet onde o mapa fica cinza se estava escondido
+    if (tabId === 'explorar' && map) {
+        setTimeout(() => { map.invalidateSize(); }, 100);
+    }
+}
