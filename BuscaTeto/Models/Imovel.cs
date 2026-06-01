@@ -25,5 +25,6 @@ namespace BuscaTeto.Models
 
         // Controlo de data
         public DateTime CriadoEm { get; set; }
+        public string StatusPagamento { get; set; } = "Pendente";
     }
 }

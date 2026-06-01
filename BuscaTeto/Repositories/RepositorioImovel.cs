@@ -36,8 +36,11 @@ namespace BuscaTeto.Repositories
             var imovelExistente = _context.Imoveis.FirstOrDefault(i => i.Id == id);
             if (imovelExistente == null) return false;
 
-            imovelExistente.Titulo = atualizar.Titulo;
-            imovelExistente.Preco = atualizar.Preco;
+            if (atualizar.Titulo != null)
+                imovelExistente.Titulo = atualizar.Titulo;
+
+            if (atualizar.Preco != null)
+                imovelExistente.Preco = (decimal)atualizar.Preco;
 
             _context.SaveChanges();
             return true;
@@ -74,6 +77,7 @@ namespace BuscaTeto.Repositories
 
         public IEnumerable<Imovel> ObterPorUsuario(string usuarioId)
         {
+            // Agora compara corretamente string com string!
             return _context.Imoveis.Where(i => i.UsuarioId == usuarioId).ToList();
         }
     }
