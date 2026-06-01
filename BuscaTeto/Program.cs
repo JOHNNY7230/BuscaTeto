@@ -83,39 +83,30 @@ app.MapGet("/imoveis", async (AppDbContext db, string? cidade, decimal? precoMin
 
 // 2. BUSCAR UM IMÓVEL PELO ID (INT) - Corrigido para evitar erro de Guid
 // Corrigido de Guid id para int id
-app.MapGet("/imoveis/{id}", async (AppDbContext db, int id) =>
+app.MapGet("/usuarios/{id:guid}", async (AppDbContext db, Guid id) =>
 {
-    var imovel = await db.Imoveis.FindAsync(id);
-    return imovel is null ? Results.NotFound() : Results.Ok(imovel);
+    var usuario = await db.Usuarios.FindAsync(id);
+    return usuario is null ? Results.NotFound() : Results.Ok(usuario);
 });
 
 // 3. CADASTRAR IMÓVEL COM REGRA DE NEGÓCIO COMPLEXA (Controle de Perfil)
 app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
 {
-    // REGRA DE NEGÓCIO 1: Verifica se o usuário que está tentando associar o imóvel realmente existe
-    var usuarioDono = await db.Usuarios.FindAsync(criar.UsuarioId);
-    if (usuarioDono == null)
-    {
-        return Results.BadRequest(new { mensagem = "Operação negada: O usuário vinculado a este cadastro não existe no sistema." });
-    }
+    // Nome correto da variável temporária
+    var novoEnderecoId = Guid.NewGuid();
 
-    // REGRA DE NEGÓCIO 2: Apenas contas cadastradas como 'Anunciante' podem postar imóveis
-    if (usuarioDono.TipoUsuario != "Anunciante")
-    {
-        return Results.Json(new { mensagem = "Acesso Negado: Apenas contas do tipo 'Anunciante' possuem permissão para publicar imóveis." }, statusCode: 403);
-    }
-
-    // Se passar pelas validações, o objeto é construído e salvo no MySQL Workbench local
     var criado = new Imovel
     {
+        Id = Guid.NewGuid(),
         Titulo = criar.Titulo,
         Descricao = criar.Descricao,
         Preco = criar.Preco,
         Quartos = criar.Quartos,
         Imagem = criar.Imagem,
-        UsuarioId = criar.UsuarioId, // Mapeado como Guid corretamente
+        UsuarioId = criar.UsuarioId,
         CriadoEm = DateTime.UtcNow,
 
+        // Usando a variável com o ID correto (letra I maiúscula)
         EnderecoId = novoEnderecoId,
         Endereco = new Endereco
         {
@@ -131,7 +122,7 @@ app.MapPost("/imoveis", async (AppDbContext db, CriarImovelRequest criar) =>
     db.Imoveis.Add(criado);
     await db.SaveChangesAsync();
 
-    return Results.Created($"/imoveis/{criado.Id}", new { mensagem = "Imóvel cadastrado com sucesso!", id = criado.Id, imovel = criado });
+    return Results.Created($"/imoveis/{criado.Id}", criado);
 });
 
 // 4. ATUALIZAR UM IMÓVEL EXISTENTE COM PROTEÇÃO

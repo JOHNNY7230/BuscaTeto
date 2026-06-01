@@ -100,7 +100,7 @@ namespace BuscaTeto.Controllers
                 // Devolve as informações necessárias para o front-end configurar o sessionStorage
                 return Ok(new
                 {
-                    id = usuario.Id,
+                    id = usuario.Id.ToString(),
                     nome = usuario.Nome,
                     email = usuario.Email,
                     tipoUsuario = usuario.TipoUsuario // Crucial para o redirecionamento de páginas
