@@ -1,115 +1,85 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BuscaTeto.Data;
 using BuscaTeto.Models;
-using BuscaTeto.Data;
-using System;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+
 namespace BuscaTeto.Controllers
 {
     [ApiController]
-    [Route("usuarios")] // Define a rota base do controller para /usuarios
-    public class UsuarioController : ControllerBase
+    [Route("api/usuarios")] // Isso faz a rota base ser automaticamente: api/usuarios
+    public class UsuariosController : ControllerBase
     {
-        // Se o seu projeto já usa uma injeção de dependência para o banco ou repositório,
-        // você pode manter o construtor aqui. Exemplo:
-        // private readonly AppDbContext _context;
-        // public UsuarioController(AppDbContext context) { _context = context; }
+        private readonly AppDbContext _context;
 
-        /// <summary>
-        /// Rota para cadastrar um novo usuário (Cliente ou Anunciante)
-        /// POST: /usuarios
-        /// </summary>
+        public UsuariosController(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        // ========================================================
+        // ROTA: POST api/usuarios (CADASTRO)
+        // ========================================================
         [HttpPost]
         public async Task<IActionResult> Cadastrar([FromBody] CriarUsuarioRequest request)
         {
-            // 1. Valida se o modelo recebido do Front-end é válido conforme as anotações [Required]
-            if (!ModelState.IsValid)
+            // A lógica de cadastro vai aqui
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var novoUsuario = new Usuario
             {
-                return BadRequest(ModelState);
-            }
+                Nome = request.Nome,
+                Email = request.Email,
+                Telefone = request.Telefone,
+                TipoUsuario = request.TipoUsuario,
+                Senha = request.Senha // Lembrete: futuramente é bom criptografar!
+            };
 
-            try
-            {
-                // 2. Mapeia os dados do Request (DTO) para a entidade Usuario
-                var novoUsuario = new Usuario
-                {
-                    Nome = request.Nome,
-                    Email = request.Email,
-                    Telefone = request.Telefone,
-                    TipoUsuario = request.TipoUsuario, // Vincula a escolha do select do front
-                    Senha = request.Senha // Dica: Criptografe a senha antes de salvar em produção
-                };
+            _context.Usuarios.Add(novoUsuario);
+            await _context.SaveChangesAsync();
 
-                // 3. LÓGICA DE SALVAMENTO NO BANCO
-                // Se estiver usando o Entity Framework:
-                // _context.Usuarios.Add(novoUsuario);
-                // await _context.SaveChangesAsync();
-
-                // Log para monitorar no console de Depuração do Visual Studio
-                System.Diagnostics.Debug.WriteLine($"Sucesso: {novoUsuario.Nome} registrado como {novoUsuario.TipoUsuario}");
-
-                return Ok(new { mensagem = "Usuário cadastrado com sucesso!" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erro interno ao salvar no MySQL: {ex.Message}");
-            }
+            return Created($"api/usuarios/{novoUsuario.Id}", new { mensagem = "Usuário cadastrado com sucesso!", id = novoUsuario.Id });
         }
 
-        /// <summary>
-        /// Rota para autenticação de usuários
-        /// POST: /usuarios/login
-        /// </summary>
+        // ========================================================
+        // 🔥 ROTA NOVA: POST api/usuarios/login (LOGIN)
+        // ========================================================
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> FazerLogin([FromBody] LoginRequest request)
         {
-            // 1. Valida se e-mail e senha foram enviados
-            if (!ModelState.IsValid)
+            // 1. Verifica se os dados não vieram nulos ou vazios
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Senha))
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { mensagem = "E-mail e senha são obrigatórios." });
             }
 
-            try
+            // 2. Busca o usuário no banco de dados
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Email == request.Email && u.Senha == request.Senha);
+
+            // 3. Se não achou (e-mail ou senha incorretos), retorna 401
+            if (usuario == null)
             {
-                // 2. BUSCA NO BANCO DE DADOS
-                // Exemplo de busca real com Entity Framework:
-                // var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == request.Email);
-
-                // 🛠️ MODO SIMULAÇÃO (Remova/Comente estas linhas quando ligar o banco real):
-                Usuario? usuario = null;
-                if (request.Email == "teste@busca.com" && request.Senha == "123456")
-                {
-                    usuario = new Usuario
-                    {
-                        // 👇 ALTERADO DE 1 PARA Guid.NewGuid() AQUI 👇
-                        Id = Guid.NewGuid(),
-                        Nome = "Luiz",
-                        Email = "teste@busca.com",
-                        TipoUsuario = "Anunciante",
-                        Senha = "123456"
-                    };
-                }
-                // ----------------------------------------------------------------------
-
-                // 3. VERIFICAÇÃO DE CREDENCIAIS
-                if (usuario == null || usuario.Senha != request.Senha)
-                {
-                    return Unauthorized(new { mensagem = "E-mail ou senha incorretos." });
-                }
-
-                // 4. RETORNO DE SUCESSO
-                // Devolve as informações necessárias para o front-end configurar o sessionStorage
-                return Ok(new
-                {
-                    id = usuario.Id.ToString(),
-                    nome = usuario.Nome,
-                    email = usuario.Email,
-                    tipoUsuario = usuario.TipoUsuario // Crucial para o redirecionamento de páginas
-                });
+                return Unauthorized(new { mensagem = "E-mail ou senha inválidos." });
             }
-            catch (Exception ex)
+
+            // 4. Se achou, retorna 200 OK com os dados que o seu JS espera
+            return Ok(new
             {
-                return StatusCode(500, $"Erro interno no servidor: {ex.Message}");
-            }
+                id = usuario.Id,
+                nome = usuario.Nome,
+                tipoUsuario = usuario.TipoUsuario
+            });
         }
+    }
+
+    // ========================================================
+    // CLASSE PARA RECEBER OS DADOS DO LOGIN
+    // (Você pode manter aqui no final ou mover para a pasta Models depois)
+    // ========================================================
+    public class LoginRequest
+    {
+        public string Email { get; set; }
+        public string Senha { get; set; }
     }
 }

@@ -1,17 +1,18 @@
-document.addEventListener('DOMContentLoaded', () => {
+Ôªødocument.addEventListener('DOMContentLoaded', () => {
 
-    // --- PARTE 1: VERIFICAR SE O USU¡RIO ACABOU DE SE CADASTRAR ---
+    // --- PARTE 1: VERIFICAR SE O USU√ÅRIO ACABOU DE SE CADASTRAR ---
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('cadastrado') === 'true') {
-        alert("Conta criada com sucesso no BuscaTeto! FaÁa seu login agora.");
+        alert("Conta criada com sucesso no BuscaTeto! Fa√ßa seu login agora.");
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // --- PARTE 2: L”GICA DE LOGIN INTEGRADA COM O BACKEND ---
+    // --- PARTE 2: L√ìGICA DE LOGIN INTEGRADA COM O BACKEND ---
     const loginForm = document.getElementById('login-form');
     const emailInput = document.getElementById('user-email');
+    const senhaInput = document.getElementById('user-pass');
 
-    // ReferÍncias das mensagens de erro
+    // Refer√™ncias das mensagens de erro
     const loginInvalidMsg = document.getElementById('login-invalid-msg');
     const emailFormatError = document.getElementById('email-format-error');
 
@@ -20,62 +21,67 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
 
             // Resetar mensagens de erro a cada nova tentativa
-            loginInvalidMsg.style.display = 'none';
-            emailFormatError.style.display = 'none';
+            if (loginInvalidMsg) loginInvalidMsg.style.display = 'none';
+            if (emailFormatError) emailFormatError.style.display = 'none';
 
-            // 1. ValidaÁ„o de formato de e-mail (Frontend)
-            if (!emailInput.checkValidity()) {
-                emailFormatError.style.display = 'block';
+            // 1. Valida√ß√£o de formato de e-mail (Frontend)
+            if (emailInput && !emailInput.checkValidity()) {
+                if (emailFormatError) emailFormatError.style.display = 'block';
                 return;
             }
 
-            const emailDigitado = emailInput.value;
-            const senhaDigitada = document.getElementById('user-pass').value;
-
-            // Cria o objeto exatamente como a classe LoginRequest do C# espera
-            const dadosLogin = {
-                email: emailDigitado,
-                senha: senhaDigitada
-            };
+            const emailDigitado = emailInput.value.trim();
+            const senhaDigitada = senhaInput.value;
 
             try {
-                // 2. Faz a requisiÁ„o POST diretamente para o endpoint de login seguro
-                const response = await fetch('/usuarios/login', {
+                // Dispara a requisi√ß√£o para o C#
+                const response = await fetch('/api/usuarios/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(dadosLogin)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailDigitado, senha: senhaDigitada })
                 });
 
-                // 3. Se as credenciais estiverem corretas (Status 200 OK)
-                if (response.ok) {
-                    const usuarioEncontrado = await response.json();
+                // L√™ a resposta como texto antes para evitar quebra do JSON se o C# retornar vazio
+                const respostaTexto = await response.text();
+                let data = {};
 
-                    console.log("Login autorizado!");
-
-                    // Guarda os dados retornados pelo C# na sess„o do navegador
-                    sessionStorage.setItem('usuarioId', usuarioEncontrado.id);
-                    sessionStorage.setItem('usuarioNome', usuarioEncontrado.nome);
-                    sessionStorage.setItem('tipoUsuario', usuarioEncontrado.tipoUsuario);
-
-                    // 4. REDIRECIONAMENTO INTELIGENTE BASEADO NO PERFIL
-                    if (usuarioEncontrado.tipoUsuario === 'Anunciante') {
-                        window.location.href = "anunciante.html";
-                    } else {
-                        window.location.href = "cliente.html";
+                if (respostaTexto) {
+                    try {
+                        data = JSON.parse(respostaTexto);
+                    } catch (err) {
+                        console.warn("A resposta n√£o √© um JSON v√°lido:", respostaTexto);
                     }
+                }
+
+                // Analisa o Status Code retornado pelo Controller
+                if (response.ok) {
+                    // Status 200: Sucesso
+                    sessionStorage.setItem('usuarioId', data.id);
+                    sessionStorage.setItem('usuarioNome', data.nome);
+                    sessionStorage.setItem('tipoUsuario', data.tipoUsuario);
+
+                    // Redirecionamento din√¢mico
+                    window.location.href = data.tipoUsuario === 'Anunciante' ? "anunciante.html" : "cliente.html";
 
                 } else if (response.status === 401) {
-                    // Se o back-end responder com 401 (N„o autorizado), mostra o erro na tela
-                    loginInvalidMsg.style.display = 'block';
+                    // Status 401: N√£o autorizado (E-mail ou senha incorretos)
+                    if (loginInvalidMsg) {
+                        loginInvalidMsg.style.display = 'block';
+                        loginInvalidMsg.innerText = data.mensagem || "E-mail ou senha incorretos.";
+                    } else {
+                        alert(data.mensagem || "E-mail ou senha incorretos.");
+                    }
+
                 } else {
-                    alert("Ocorreu um problema inesperado no servidor.");
+                    // Outros erros (400, 500, etc)
+                    console.error("Erro do Servidor:", response.status, respostaTexto);
+                    alert("Erro " + response.status + ": " + (data.mensagem || "Verifique o Console do navegador."));
                 }
 
             } catch (error) {
-                console.error("Erro no processo de login:", error);
-                alert("O servidor est· offline ou houve um erro de conex„o.");
+                // Cai aqui se a API estiver desligada ou houver queda de internet
+                console.error("Erro de Conex√£o:", error);
+                alert("Erro na conex√£o com o servidor. Verifique se a API do BuscaTeto est√° rodando.");
             }
         });
     }

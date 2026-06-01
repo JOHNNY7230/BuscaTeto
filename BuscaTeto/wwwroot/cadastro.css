@@ -167,3 +167,75 @@ body {
         .footer a:hover {
             text-decoration: underline;
         }
+/* ==========================================
+   ESTILO DOS CARDS DE TIPO DE CONTA
+========================================== */
+.account-type-selector {
+    display: flex;
+    gap: 15px;
+    margin-top: 5px;
+}
+
+/* Oculta a bolinha padrão do radio button */
+.type-card input[type="radio"] {
+    display: none;
+}
+
+.type-card {
+    flex: 1;
+    cursor: pointer;
+}
+
+/* O visual da "caixa" */
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 15px;
+    border: 2px solid #E5E7EB; /* Cor da borda inativa */
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+    .card-content i {
+        color: #6B7280; /* Ícone cinza quando inativo */
+        width: 28px;
+        height: 28px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+
+.card-title {
+    font-weight: 700;
+    color: #111827;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.card-desc {
+    font-size: 0.75rem;
+    color: #6B7280;
+}
+
+/* Efeito Hover (passar o mouse) */
+.type-card:hover .card-content {
+    border-color: #A4CAFE;
+    background-color: #F8FAFC;
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   EFEITO QUANDO O CARD É SELECIONADO (MÁGICA)
+========================================== */
+.type-card input[type="radio"]:checked + .card-content {
+    border-color: #1A56DB; /* Azul BuscaTeto */
+    background-color: #EFF6FF; /* Fundo azul bem clarinho */
+    box-shadow: 0 4px 6px -1px rgba(26, 86, 219, 0.1);
+}
+
+    .type-card input[type="radio"]:checked + .card-content i {
+        color: #1A56DB; /* Ícone fica azul */
+    }

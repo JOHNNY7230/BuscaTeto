@@ -5,8 +5,7 @@ namespace BuscaTeto.Models
 {
     public class Usuario
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-
+        public Guid Id { get; set; } = Guid.NewGuid();
         [Required]
         public string Nome { get; set; } = string.Empty;
 
@@ -25,5 +24,6 @@ namespace BuscaTeto.Models
 
         // --- ADICIONADO: Propriedade para salvar a data de criação da conta ---
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
     }
 }
