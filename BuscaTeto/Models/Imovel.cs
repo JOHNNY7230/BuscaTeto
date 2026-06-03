@@ -47,6 +47,9 @@ namespace BuscaTeto.Models
       
 
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+        public string StatusImovel { get; set; } = "Disponivel"; // Padrão é disponível
+        public int? InquilinoId { get; set; } // A interrogação '?' significa que pode ser nulo (vazio)
+        public int? DiaVencimento { get; set; }
 
     }
 }

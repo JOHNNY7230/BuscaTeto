@@ -72,5 +72,31 @@ namespace BuscaTeto.Repositories
 
             return query.ToList();
         }
+
+        // ==========================================
+        // NOVOS MÉTODOS: CONTROLE FINANCEIRO / ALUGUEL
+        // ==========================================
+
+        public bool MarcarComoAlugado(int imovelId, int inquilinoId, int diaVencimento)
+        {
+            var imovel = _context.Imoveis.FirstOrDefault(i => i.Id == imovelId);
+            if (imovel == null) return false;
+
+            imovel.StatusImovel = "Alugado";
+            imovel.InquilinoId = inquilinoId;
+            imovel.DiaVencimento = diaVencimento;
+            imovel.StatusPagamento = "Pendente";
+
+            _context.SaveChanges();
+            return true;
+        }
+
+        public IEnumerable<Imovel> ObterImoveisAlugadosDoAnunciante(string anuncianteId)
+        {
+            // Busca apenas os imóveis alugados daquele anunciante específico
+            return _context.Imoveis
+                .Where(i => i.UsuarioId == anuncianteId && i.StatusImovel == "Alugado")
+                .ToList();
+        }
     }
 }

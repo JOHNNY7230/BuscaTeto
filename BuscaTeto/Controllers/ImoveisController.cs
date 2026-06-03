@@ -53,5 +53,28 @@ namespace BuscaTeto.Controllers
         {
             return Ok(_repositorio.ObterTodos());
         }
+
+        // ==========================================
+        // NOVOS MÉTODOS: CONTROLE FINANCEIRO / ALUGUEL
+        // ==========================================
+
+        [HttpPut("{id}/alugar")]
+        public IActionResult AlugarImovel(int id, [FromBody] MarcarAlugadoRequest request)
+        {
+            var sucesso = _repositorio.MarcarComoAlugado(id, request.InquilinoId, request.DiaVencimento);
+
+            if (!sucesso)
+                return NotFound(new { mensagem = "Imóvel não encontrado." });
+
+            return Ok(new { mensagem = "Imóvel marcado como alugado com sucesso!" });
+        }
+
+        [HttpGet("financeiro/{usuarioId}")]
+        public IActionResult ObterFinanceiro(string usuarioId)
+        {
+            // Busca os imóveis alugados vinculados ao ID do anunciante (UsuarioId)
+            var imoveis = _repositorio.ObterImoveisAlugadosDoAnunciante(usuarioId);
+            return Ok(imoveis);
+        }
     }
 }

@@ -5,25 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BuscaTeto | Meu Painel de Anunciante</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="anunciante.css">
 </head>
 <body>
 
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">🏠 Busca<span>Teto</span> <span class="badge-anunciante">Anunciante</span></div>
+            <div class="logo">
+                <i class="fa-solid fa-house-chimney text-primary"></i> Busca<span>Teto</span>
+                <span class="badge-anunciante">Anunciante</span>
+            </div>
 
             <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('dashboard')">Visão Geral</button>
-                <button class="tab-btn" onclick="switchTab('imoveis')">Meus Imóveis</button>
-                <button class="tab-btn" onclick="switchTab('financeiro')">Financeiro</button>
+                <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> Visão Geral</button>
+                <button class="tab-btn" onclick="switchTab('imoveis')"><i class="fa-solid fa-building"></i> Meus Imóveis</button>
+                <button class="tab-btn" onclick="switchTab('controle')"><i class="fa-solid fa-list-check"></i> Controlar Imóveis</button>
+                <button class="tab-btn" onclick="switchTab('financeiro')"><i class="fa-solid fa-wallet"></i> Financeiro</button>
             </div>
 
             <div class="nav-user">
-                <button class="btn-add" onclick="openModal()">+ Novo Imóvel</button>
-                <div class="user-profile">
-                    <div class="avatar">A</div>
-                    <button class="btn-logout" onclick="window.location.href='login.html'">Sair</button>
+                <button class="btn-primary" onclick="openModal('modal-add')"><i class="fa-solid fa-plus"></i> Novo Imóvel</button>
+
+                <div class="user-profile-container">
+                    <img src="https://ui-avatars.com/api/?name=Lucas+Fast&background=0D8ABC&color=fff&rounded=true" alt="Avatar" class="avatar" onclick="toggleUserMenu()">
+
+                    <div class="user-dropdown" id="user-menu">
+                        <div class="dropdown-header">
+                            <img src="https://ui-avatars.com/api/?name=Lucas+Fast&background=0D8ABC&color=fff&rounded=true" alt="Avatar">
+                            <div>
+                                <h4>Lucas (Fast)</h4>
+                                <span class="user-role">Conta Anunciante</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-info">
+                            <p><i class="fa-regular fa-calendar-days"></i> Membro desde: 15/05/2026</p>
+                            <p><i class="fa-solid fa-star"></i> Avaliação: 4.9/5.0</p>
+                        </div>
+                        <hr>
+                        <button class="dropdown-item"><i class="fa-regular fa-id-badge"></i> Meu Perfil</button>
+                        <button class="dropdown-item"><i class="fa-solid fa-gear"></i> Configurações</button>
+                        <button class="dropdown-item text-danger" onclick="window.location.href='login.html'"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair da Conta</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,35 +56,47 @@
 
         <section id="tab-dashboard" class="tab-content active">
             <div class="section-header">
-                <h2>Olá, Anunciante! 👋</h2>
+                <h2>Olá, Lucas! 👋</h2>
                 <p>Aqui está o resumo da sua carteira de imóveis hoje.</p>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-title">Total de Imóveis</div>
-                    <div class="stat-value" id="dash-total">0</div>
+                    <div class="stat-icon bg-blue"><i class="fa-solid fa-building-user"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-title">Total de Imóveis</div>
+                        <div class="stat-value" id="dash-total">12</div>
+                    </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-title">Imóveis Alugados</div>
-                    <div class="stat-value" id="dash-alugados">0</div>
+                    <div class="stat-icon bg-green"><i class="fa-solid fa-key"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-title">Imóveis Alugados</div>
+                        <div class="stat-value" id="dash-alugados">8</div>
+                    </div>
                 </div>
-                <div class="stat-card warning-bg">
-                    <div class="stat-title">Pendências de Pagamento</div>
-                    <div class="stat-value text-warning" id="dash-pendentes">0</div>
+                <div class="stat-card">
+                    <div class="stat-icon bg-orange"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-title">Inquilinos Pendentes</div>
+                        <div class="stat-value text-warning" id="dash-pendentes">2</div>
+                    </div>
                 </div>
-                <div class="stat-card success-bg">
-                    <div class="stat-title">Receita Mensal Esperada</div>
-                    <div class="stat-value text-success" id="dash-receita">R$ 0,00</div>
+                <div class="stat-card">
+                    <div class="stat-icon bg-purple"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <div class="stat-info">
+                        <div class="stat-title">Receita Mensal</div>
+                        <div class="stat-value text-success" id="dash-receita">R$ 14.500</div>
+                    </div>
                 </div>
-            </div>      
+            </div>
         </section>
 
         <section id="tab-imoveis" class="tab-content">
             <div class="section-header flex-between">
                 <div>
                     <h2>Meus Imóveis</h2>
-                    <p>Gerencie seus anúncios e propriedades.</p>
+                    <p>Gerencie seus anúncios e a visibilidade das suas propriedades.</p>
                 </div>
                 <div class="filter-chips">
                     <button class="chip active">Todos</button>
@@ -73,16 +108,37 @@
             <div class="property-grid" id="property-list">
                 <div class="property-card">
                     <div class="property-img">
-                        <span class="status-badge badge-alugado">Alugado</span>
+                        <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80" alt="Casa">
+                        <span class="status-badge badge-vago">Vago</span>
                     </div>
                     <div class="property-info">
-                        <h3>Apartamento com vista livre</h3>
-                        <p class="address">Rua Itajubá, Floresta - BH</p>
+                        <div class="type-badge"><i class="fa-solid fa-house"></i> Casa</div>
+                        <h3>Casa espaçosa com quintal</h3>
+                        <p class="address"><i class="fa-solid fa-location-dot"></i> Av. Fleming, Ouro Preto - BH</p>
                         <div class="price-row">
-                            <span class="price">R$ 2.500/mês</span>
-                            <span class="type">Apartamento</span>
+                            <span class="price">R$ 4.200<span>/mês</span></span>
+                            <button class="btn-icon" title="Configurações"><i class="fa-solid fa-gear"></i></button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-controle" class="tab-content">
+            <div class="section-header">
+                <h2>Controlar Imóveis</h2>
+                <p>Gerencie o status das suas propriedades de forma rápida e direta.</p>
+            </div>
+
+            <div class="minimal-section">
+                <h3 class="minimal-title"><i class="fa-solid fa-house-circle-check text-success"></i> Disponíveis para Alugar</h3>
+                <div class="minimal-list" id="lista-vagos">
+                </div>
+            </div>
+
+            <div class="minimal-section" style="margin-top: 32px;">
+                <h3 class="minimal-title"><i class="fa-solid fa-house-lock text-primary"></i> Imóveis Alugados</h3>
+                <div class="minimal-list" id="lista-alugados">
                 </div>
             </div>
         </section>
@@ -90,10 +146,10 @@
         <section id="tab-financeiro" class="tab-content">
             <div class="section-header">
                 <h2>Controle Financeiro</h2>
-                <p>Acompanhe os pagamentos dos seus inquilinos.</p>
+                <p>Acompanhe os pagamentos dos seus inquilinos ativos.</p>
             </div>
 
-            <div class="table-container">
+            <div class="table-card">
                 <table class="finance-table">
                     <thead>
                         <tr>
@@ -105,31 +161,7 @@
                             <th>Ação</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Apto. Savassi - 301</td>
-                            <td>Carlos Eduardo</td>
-                            <td>10/Mai</td>
-                            <td>R$ 3.200</td>
-                            <td><span class="tag tag-pago">Pago</span></td>
-                            <td><button class="btn-text">Ver Recibo</button></td>
-                        </tr>
-                        <tr>
-                            <td>Casa Caiçara</td>
-                            <td>Mariana Silva</td>
-                            <td>15/Mai</td>
-                            <td>R$ 2.800</td>
-                            <td><span class="tag tag-pendente">Pendente</span></td>
-                            <td><button class="btn-text">Cobrar</button></td>
-                        </tr>
-                        <tr>
-                            <td>Studio Centro</td>
-                            <td>João Pedro</td>
-                            <td>05/Mai</td>
-                            <td>R$ 1.500</td>
-                            <td><span class="tag tag-atrasado">Atrasado</span></td>
-                            <td><button class="btn-text text-danger">Notificar</button></td>
-                        </tr>
+                    <tbody id="tabela-financeiro-corpo">
                     </tbody>
                 </table>
             </div>
@@ -139,28 +171,28 @@
     <div id="modal-add" class="modal-overlay">
         <div class="modal-card">
             <div class="modal-header">
-                <h2>Novo Imóvel</h2>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <h2><i class="fa-solid fa-house-medical"></i> Cadastrar Imóvel</h2>
+                <button class="close-btn" onclick="closeModal('modal-add')"><i class="fa-solid fa-xmark"></i></button>
             </div>
-
-            <form id="add-form">
+            <form id="add-form" class="modern-form">
                 <div class="input-group">
                     <label>Título do anúncio</label>
                     <input type="text" id="title" placeholder="Ex: Apartamento reformado 2Q" required>
                 </div>
-
                 <div class="input-group">
-                    <label>Endereço</label>
+                    <label>Endereço Completo</label>
                     <input type="text" id="address" placeholder="Rua, Bairro, Cidade" required>
                 </div>
-
                 <div class="row">
                     <div class="input-group">
                         <label>Preço mensal (R$)</label>
-                        <input type="number" id="price" placeholder="0,00" required>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-brazilian-real-sign"></i>
+                            <input type="number" id="price" placeholder="0,00" class="input-with-icon" required>
+                        </div>
                     </div>
                     <div class="input-group">
-                        <label>Tipo</label>
+                        <label>Tipo de Imóvel</label>
                         <select id="type">
                             <option value="Apartamento">Apartamento</option>
                             <option value="Casa">Casa</option>
@@ -168,36 +200,133 @@
                         </select>
                     </div>
                 </div>
-
-                <div class="input-group" style="margin-top: 15px;">
+                <div class="input-group file-upload-wrapper">
                     <label>Foto do Imóvel</label>
-                    <div style="position: relative; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 10px; text-align: center; background: #f8fafc; cursor: pointer;">
-                        <span style="color: #64748b; font-size: 14px; font-weight: 500;">📸 Clique para selecionar uma foto</span>
-                        <input type="file" id="imageInput" accept="image/*" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                    <div class="file-upload-box">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Clique ou arraste uma foto aqui</span>
+                        <input type="file" id="imageInput" accept="image/*" required>
                     </div>
                 </div>
-                <br>
-
-                <button type="submit" class="btn-submit">Cadastrar e Anunciar</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-add')">Cancelar</button>
+                    <button type="submit" class="btn-primary"><i class="fa-solid fa-check"></i> Publicar Anúncio</button>
+                </div>
             </form>
         </div>
     </div>
+
+    <div id="modal-alugar" class="modal-overlay">
+        <div class="modal-card modal-sm">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-handshake text-success"></i> Confirmar Aluguel</h2>
+                <button class="close-btn" onclick="closeModal('modal-alugar')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="color: #64748b; margin-bottom: 20px; font-size: 0.95rem;">Vincule este imóvel a um inquilino cadastrado no BuscaTeto para ativar o controle financeiro.</p>
+            <form id="alugar-form" class="modern-form">
+                <input type="hidden" id="alugar-imovel-id">
+
+                <div class="input-group">
+                    <label>ID do Inquilino (Cliente)</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-solid fa-id-card"></i>
+                        <input type="number" id="inquilino-id" placeholder="Ex: 45" class="input-with-icon" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Dia do Vencimento</label>
+                    <div class="input-icon-wrapper">
+                        <i class="fa-regular fa-calendar"></i>
+                        <input type="number" id="dia-vencimento" placeholder="Ex: 10" min="1" max="31" class="input-with-icon" required>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeModal('modal-alugar')">Cancelar</button>
+                    <button type="submit" class="btn-success"><i class="fa-solid fa-check-double"></i> Confirmar Contrato</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="modal-detalhes" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-circle-info text-primary"></i> Detalhes do Imóvel</h2>
+                <button class="close-btn" onclick="closeModal('modal-detalhes')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="detalhes-content">
+                <div class="detalhes-img-container">
+                    <img id="detalhe-imagem" src="" alt="Foto do Imóvel">
+                    <span id="detalhe-preco-tag" class="detalhe-preco-badge"></span>
+                </div>
+
+                <div class="detalhes-info">
+                    <h3 id="detalhe-titulo"></h3>
+                    <p class="detalhe-desc" id="detalhe-descricao"></p>
+
+                    <div class="detalhes-grid">
+                        <div class="detalhe-item">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <div>
+                                <strong>Endereço Completo</strong>
+                                <p id="detalhe-endereco"></p>
+                            </div>
+                        </div>
+                        <div class="detalhe-item">
+                            <i class="fa-solid fa-map-pin"></i>
+                            <div>
+                                <strong>CEP</strong>
+                                <p id="detalhe-cep"></p>
+                            </div>
+                        </div>
+                        <div class="detalhe-item">
+                            <i class="fa-solid fa-bed"></i>
+                            <div>
+                                <strong>Quartos</strong>
+                                <p id="detalhe-quartos"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Lógica simples para alternar entre as abas do Front-end
+        // Alternar Abas
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-
             document.getElementById('tab-' + tabId).classList.add('active');
             event.currentTarget.classList.add('active');
         }
 
-        // Funções do Modal
-        function openModal() { document.getElementById('modal-add').style.display = 'flex'; }
-        function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
+        // Abrir/Fechar Modais
+        function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+
+        // Dropdown do Usuário
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('active');
+        }
+
+        // Fechar dropdown se clicar fora
+        window.onclick = function (event) {
+            if (!event.target.matches('.avatar')) {
+                const dropdowns = document.getElementsByClassName("user-dropdown");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    if (dropdowns[i].classList.contains('active')) {
+                        dropdowns[i].classList.remove('active');
+                    }
+                }
+            }
+        }
     </script>
 
-    <script src="anunciante.js?v=2.0"></script>
+    <script src="anunciante.js"></script>
 
 </body>
 </html>
