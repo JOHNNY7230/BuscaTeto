@@ -23,6 +23,9 @@
                 <button class="tab-btn" onclick="switchTab('favoritos')">
                     <i data-lucide="heart"></i> Meus Favoritos
                 </button>
+                <button class="tab-btn" onclick="switchTab('perfil')">
+                    <i data-lucide="user"></i> Minha Conta
+                </button>
             </div>
 
             <div class="nav-user">
@@ -79,6 +82,39 @@
             </div>
         </section>
 
+        <section id=\"tab-perfil\" class=\"tab-content\">
+            <div class=\"content-header\" style=\"margin-top: 20px;\">
+                <h2>Minha Conta 👤</h2>
+                <p>Gerencie as suas informações de cadastro na plataforma.</p>
+            </div>
+
+            <div style=\"background: var(--white); padding: 30px; border-radius: 20px; max-width: 500px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-top: 20px;\">
+                <div style=\"display: flex; align-items: center; gap: 20px; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;\">
+                    <div style=\"background: var(--primary-blue); color: var(--white); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800;\" id=\"perfil-avatar\">
+                        -
+                    </div>
+                    <div>
+                        <h3 id=\"perfil-nome-titulo\" style=\"font-size: 1.2rem; font-weight: 700;\">Carregando...</h3>
+                        <span style=\"background: #e0e7ff; color: #4338ca; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 20px; margin-top: 4px; display: inline-block;\">Cliente</span>
+                    </div>
+                </div>
+
+                <div style=\"display: flex; flex-direction: column; gap: 15px;\">
+                    <div>
+                        <label style=\"font-size: 0.8rem; color: var(--text-gray); font-weight: 600;\">ID da Conta (UUID)</label>
+                        <p id=\"perfil-id\" style=\"font-family: monospace; font-size: 0.9rem; background: #f1f5f9; padding: 8px; border-radius: 8px; color: #475569; margin-top: 4px;\">-</p>
+                    </div>
+                    <div>
+                        <label style=\"font-size: 0.8rem; color: var(--text-gray); font-weight: 600;\">Nome Completo</label>
+                        <p id=\"perfil-nome\" style=\"font-weight: 500; margin-top: 4px;\">-</p>
+                    </div>
+                    <div>
+                        <label style=\"font-size: 0.8rem; color: var(--text-gray); font-weight: 600;\">E-mail de Acesso</label>
+                        <p id=\"perfil-email\" style=\"font-weight: 500; margin-top: 4px;\">-</p>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
