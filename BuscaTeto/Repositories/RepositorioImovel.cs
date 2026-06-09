@@ -98,5 +98,16 @@ namespace BuscaTeto.Repositories
                 .Where(i => i.UsuarioId == anuncianteId && i.StatusImovel == "Alugado")
                 .ToList();
         }
+        public bool PagarMensalidade(int imovelId)
+        {
+            var imovel = _context.Imoveis.FirstOrDefault(i => i.Id == imovelId);
+            if (imovel == null) return false;
+
+            // Muda o status no banco de dados real
+            imovel.StatusPagamento = "Pago";
+
+            _context.SaveChanges();
+            return true;
+        }
     }
 }

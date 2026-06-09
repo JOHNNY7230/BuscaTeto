@@ -76,5 +76,16 @@ namespace BuscaTeto.Controllers
             var imoveis = _repositorio.ObterImoveisAlugadosDoAnunciante(usuarioId);
             return Ok(imoveis);
         }
+
+        [HttpPut("{id}/pagar")]
+        public IActionResult Pagar(int id)
+        {
+            var sucesso = _repositorio.PagarMensalidade(id);
+
+            if (!sucesso)
+                return NotFound(new { mensagem = "Imóvel não encontrado." });
+
+            return Ok(new { mensagem = "Pagamento registrado no banco de dados com sucesso!" });
+        }
     }
 }

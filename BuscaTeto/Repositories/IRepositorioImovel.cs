@@ -17,5 +17,10 @@ namespace BuscaTeto.Repositories
         IEnumerable<Imovel> Buscar(string? cidade, decimal? precoMin, decimal? precoMax, int? quartosMin);
         bool MarcarComoAlugado(int imovelId, int inquilinoId, int diaVencimento);
         IEnumerable<Imovel> ObterImoveisAlugadosDoAnunciante(string usuarioId);
+        // Adicione esta linha junto com os outros contratos
+        bool PagarMensalidade(int imovelId);
+
     }
-}
+
+ 
+    }
