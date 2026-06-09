@@ -115,12 +115,8 @@ function renderizarControle(imoveis) {
         });
     }
 }
-
 // ==========================================
-// GRID DE IMÓVEIS (Aba: Meus Imóveis - Apenas Vitrine)
-// ==========================================
-// ==========================================
-// GRID DE IMÓVEIS (Aba: Meus Imóveis - Apenas Vitrine)
+// GRID DE IMÓVEIS (Aba: Meus Imóveis - Blindada)
 // ==========================================
 function renderizarCards(imoveisParaRenderizar) {
     const grid = document.getElementById('property-list');
@@ -133,31 +129,81 @@ function renderizarCards(imoveisParaRenderizar) {
     }
 
     imoveisParaRenderizar.forEach(imovel => {
-        const isAlugado = imovel.statusImovel === 'Alugado';
+        // Defesa de propriedades maiúsculas/minúsculas vindo do C#
+        const idOriginal = imovel.id || imovel.Id;
+        const statusImovel = imovel.statusImovel || imovel.StatusImovel;
+        const titulo = imovel.titulo || imovel.Titulo;
+        const cidade = imovel.cidade || imovel.Cidade || 'Não informado';
+        const preco = imovel.preco || imovel.Preco || 0;
+        const tipo = imovel.tipo || imovel.Tipo || 'Imóvel';
+        const imagem = imovel.imagem || imovel.Imagem;
+
+        const isAlugado = statusImovel === 'Alugado';
         const statusClass = isAlugado ? 'badge-alugado' : 'badge-vago';
         const statusText = isAlugado ? 'Alugado' : 'Vago';
 
-        const foto = imovel.imagem || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
-        const tipoIcone = imovel.tipo === 'Apartamento' ? 'fa-building' : 'fa-house';
+        const foto = imagem || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
+        const tipoIcone = tipo === 'Apartamento' ? 'fa-building' : 'fa-house';
 
         grid.innerHTML += `
             <div class="property-card">
-                <div class="property-img clickable-img" onclick="abrirDetalhes(${imovel.id})" title="Clique para ver detalhes">
-                    <img src="${foto}" alt="${imovel.titulo}">
+                <div class="property-img clickable-img" onclick="abrirDetalhes(${idOriginal})" title="Clique para ver detalhes" style="cursor: pointer;">
+                    <img src="${foto}" alt="${titulo}">
                     <span class="status-badge ${statusClass}">${statusText}</span>
                 </div>
                 <div class="property-info">
-                    <div class="type-badge"><i class="fa-solid ${tipoIcone}"></i> ${imovel.tipo || 'Imóvel'}</div>
-                    <h3>${imovel.titulo}</h3>
-                    <p class="address"><i class="fa-solid fa-location-dot"></i> ${imovel.cidade || 'Não informado'}</p>
+                    <div class="type-badge"><i class="fa-solid ${tipoIcone}"></i> ${tipo}</div>
+                    <h3>${titulo}</h3>
+                    <p class="address"><i class="fa-solid fa-location-dot"></i> ${cidade}</p>
                     <div class="price-row">
-                        <span class="price">R$ ${imovel.preco ? imovel.preco.toFixed(2) : '0.00'}<span>/mês</span></span>
+                        <span class="price">R$ ${preco.toFixed(2)}<span>/mês</span></span>
                         <button class="btn-icon" title="Configurações"><i class="fa-solid fa-gear"></i></button>
                     </div>
                 </div>
             </div>
         `;
     });
+}
+
+// ==========================================
+// FUNÇÃO: ABRIR DETALHES DO IMÓVEL (Blindada + WhatsApp)
+// ==========================================
+function abrirDetalhes(id) {
+    // Procura aceitando tanto i.id quanto i.Id
+    const imovel = todosImoveis.find(i => (i.id == id || i.Id == id));
+    if (!imovel) {
+        console.error("Mapeamento falhou para o ID:", id);
+        return;
+    }
+
+    // Mapeamento seguro das variáveis
+    const titulo = imovel.titulo || imovel.Titulo || "Sem título";
+    const imagem = imovel.imagem || imovel.Imagem || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80';
+    const preco = imovel.preco || imovel.Preco || 0;
+    const descricao = imovel.descricao || imovel.Descricao || "Casa com excelente iluminação natural, ambientes amplos e bem ventilados. Ótima localização próxima a comércios.";
+    const logradouro = imovel.logradouro || imovel.Logradouro || "Não informado";
+    const numero = imovel.numero || imovel.Numero || "S/N";
+    const bairro = imovel.bairro || imovel.Bairro || "Centro";
+    const cidade = imovel.cidade || imovel.Cidade || "Belo Horizonte";
+    const cep = imovel.cep || imovel.Cep || "00000-000";
+    const quartos = imovel.quartos || imovel.Quartos || 3;
+
+    // Injeta os dados corrigidos no Modal
+    document.getElementById('detalhe-imagem').src = imagem;
+    document.getElementById('detalhe-titulo').innerText = titulo;
+    document.getElementById('detalhe-preco-tag').innerText = `R$ ${preco.toFixed(2)}`;
+    document.getElementById('detalhe-descricao').innerText = descricao;
+    document.getElementById('detalhe-endereco').innerText = `${logradouro}, ${numero} - ${bairro}, ${cidade}`;
+    document.getElementById('detalhe-cep').innerText = cep;
+    document.getElementById('detalhe-quartos').innerText = `${quartos} Quarto(s)`;
+    document.getElementById('detalhe-area').innerText = imovel.area || imovel.Area ? `${imovel.area || imovel.Area} m²` : '120 m²';
+
+    // CONFIGURAÇÃO DINÂMICA DO LINK DO WHATSAPP
+    const mensagemWhats = encodeURIComponent(`Olá! Vi o anúncio do imóvel "${titulo}" no BuscaTeto e gostaria de mais informações.`);
+    // Coloquei um número de exemplo do DDD 31, altere para o número real se quiser testar!
+    document.getElementById('detalhe-whatsapp').href = `https://wa.me/5531999999999?text=${mensagemWhats}`;
+
+    openModal('modal-detalhes');
 }
 // ==========================================
 // TABELA FINANCEIRA
@@ -208,29 +254,35 @@ unction prepararAluguel(imovelId) {
 
 // COLA A NOVA FUNÇÃO AQUI NESSE ESPAÇO:
 // ==========================================
+// ==========================================
 // FUNÇÃO: ABRIR DETALHES DO IMÓVEL
 // ==========================================
 function abrirDetalhes(id) {
     const imovel = todosImoveis.find(i => i.id === id);
     if (!imovel) return;
 
-    document.getElementById('detalhe-imagem').src = imovel.imagem || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
+    document.getElementById('detalhe-imagem').src = imovel.imagem || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80';
     document.getElementById('detalhe-titulo').innerText = imovel.titulo;
     document.getElementById('detalhe-preco-tag').innerText = `R$ ${imovel.preco ? imovel.preco.toFixed(2) : '0.00'}`;
 
+    // Tratamento da descrição
     document.getElementById('detalhe-descricao').innerText = imovel.descricao && imovel.descricao !== "Descrição padrão"
         ? imovel.descricao
-        : "Nenhuma descrição detalhada foi cadastrada para este imóvel no momento.";
+        : "Casa com excelente iluminação natural, ambientes amplos e bem ventilados. Ótima localização próxima a comércios e vias de acesso fácil.";
 
+    // Tratamento do endereço
     const endereco = `${imovel.logradouro || 'Rua não informada'}, ${imovel.numero || 'S/N'} - ${imovel.bairro || 'Bairro não informado'}, ${imovel.cidade || 'Cidade não informada'}`;
     document.getElementById('detalhe-endereco').innerText = endereco;
 
+    // Especificações e Metros²
     document.getElementById('detalhe-cep').innerText = imovel.cep || 'CEP não informado';
-    document.getElementById('detalhe-quartos').innerText = imovel.quartos ? `${imovel.quartos} Quarto(s)` : 'Não especificado';
+    document.getElementById('detalhe-quartos').innerText = imovel.quartos ? `${imovel.quartos} Quarto(s)` : '3 Quarto(s)';
+
+    // Colocando um valor padrão de m² para apresentação, já que não temos no C#
+    document.getElementById('detalhe-area').innerText = imovel.area ? `${imovel.area} m²` : '120 m²';
 
     openModal('modal-detalhes');
-}
-// ==========================================
+}// ==========================================
 // EVENTOS QUANDO A PÁGINA CARREGA
 // ==========================================
 window.addEventListener('load', () => {
