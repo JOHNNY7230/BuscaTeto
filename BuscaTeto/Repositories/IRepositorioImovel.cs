@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Threading.Tasks; // ✅ necessário para Task
+using System.Threading.Tasks;
 using BuscaTeto.Models;
 
 namespace BuscaTeto.Repositories
@@ -13,10 +13,14 @@ namespace BuscaTeto.Repositories
         Imovel Criar(Imovel imovel);
         bool Atualizar(int id, AtualizarImovelRequest atualizar);
         bool Remover(int id);
-        IEnumerable<Imovel> Buscar(string? cidade, decimal? precoMin, decimal? precoMax, int? quartosMin);
-        IEnumerable<Imovel> ObterImoveisAlugadosDoAnunciante(string usuarioId);
+
+        // quartosMin removido — Quartos não existe no banco
+        IEnumerable<Imovel> Buscar(string? cidade, decimal? precoMin, decimal? precoMax);
+
         bool PagarMensalidade(int imovelId);
         Task<bool> MarcarComoAlugado(int imovelId, int inquilinoId, int diaVencimento);
-        Task<IEnumerable<Imovel>> ObterImoveisAlugadosDoAnunciante(int UsuarioId);
+
+        // Overload com string removido — use só int
+        Task<IEnumerable<Imovel>> ObterImoveisAlugadosDoAnunciante(int usuarioId);
     }
 }

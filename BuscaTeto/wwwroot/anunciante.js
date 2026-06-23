@@ -14,11 +14,8 @@ window.switchTab = function (tabName, btnElement) {
     const targetTab = document.getElementById(`tab-${tabName}`);
     if (targetTab) targetTab.classList.add('active');
 
-    if (btnElement) {
-        btnElement.classList.add('active');
-    }
+    if (btnElement) btnElement.classList.add('active');
 
-    // Ao entrar nas abas, renderiza os dados atuais
     if (tabName === 'controle') renderizarControle(todosImoveis);
     if (tabName === 'financeiro') renderizarFinanceiro(todosImoveis);
     if (tabName === 'imoveis') renderizarCards(todosImoveis);
@@ -38,10 +35,10 @@ window.closeModal = function (id) {
     if (modal) modal.style.display = 'none';
 };
 
-// Dropdown do usuário
 window.toggleUserMenu = function () {
     document.getElementById('user-menu').classList.toggle('active');
 };
+
 window.addEventListener('click', function (e) {
     if (!e.target.matches('.avatar')) {
         const menu = document.getElementById('user-menu');
@@ -91,7 +88,9 @@ async function carregarImoveisDoBanco() {
         resetVisuals();
 
     } catch (error) {
-        console.error("❌ Falha na comunicação com a API:", error);
+        // ✅ CORRIGIDO: try sem catch/finally causava SyntaxError que derrubava o JS inteiro
+        console.error("Erro ao carregar imóveis:", error);
+        alert("❌ Não foi possível carregar seus imóveis. Verifique sua conexão.");
     }
 }
 
@@ -151,16 +150,17 @@ function renderizarCards(imoveis) {
         const logradouro = imovel.logradouro ?? imovel.Logradouro ?? '';
         const preco = imovel.preco ?? imovel.Preco ?? 0;
         const tipo = imovel.tipo ?? imovel.Tipo ?? 'Imóvel';
-        const imagem = imovel.imagem ?? imovel.Imagem ?? 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80';
+        const imagem = imovel.imagem ?? imovel.Imagem ?? '';
         const status = imovel.statusImovel ?? imovel.StatusImovel ?? 'Vago';
         const isAlugado = status === 'Alugado';
 
-        const imgSrc = imagem && imagem.startsWith('data:') ? imagem : (imagem || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80');
+        const imgFallback = 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80';
+        const imgSrc = imagem && imagem.startsWith('data:') ? imagem : (imagem || imgFallback);
 
         return `
         <div class="property-card">
             <div class="property-img">
-                <img src="${imgSrc}" alt="${titulo}" onerror="this.src='https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'">
+                <img src="${imgSrc}" alt="${titulo}" onerror="this.src='${imgFallback}'">
                 <span class="status-badge ${isAlugado ? 'badge-alugado' : 'badge-vago'}">${isAlugado ? 'Alugado' : 'Vago'}</span>
             </div>
             <div class="property-info">
@@ -189,7 +189,7 @@ function renderizarControle(imoveis) {
     const vagos = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) !== 'Alugado');
     const alugados = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) === 'Alugado');
 
-    // Renderiza os vagos (disponíveis para alugar)
+    // Vagos (disponíveis para alugar)
     if (vagos.length === 0) {
         listaVagos.innerHTML = `<p style="color:#64748b; padding:16px 0; font-size:0.9rem;">Todos os seus imóveis estão alugados.</p>`;
     } else {
@@ -211,7 +211,7 @@ function renderizarControle(imoveis) {
         }).join('');
     }
 
-    // Renderiza os alugados (com opção de desocupar)
+    // Alugados (com opção de desocupar)
     if (alugados.length === 0) {
         listaAlugados.innerHTML = `<p style="color:#64748b; padding:16px 0; font-size:0.9rem;">Nenhum imóvel alugado no momento.</p>`;
     } else {
@@ -237,7 +237,8 @@ function renderizarControle(imoveis) {
                     </span>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    ${!isPago ? `<button class="btn-primary btn-sm" onclick="pagarMensalidade(${id})">
+                    ${!isPago ? `
+                    <button class="btn-primary btn-sm" onclick="pagarMensalidade(${id})">
                         <i class="fa-solid fa-check"></i> Confirmar Pagamento
                     </button>` : ''}
                     <button class="btn-danger btn-sm" onclick="desocuparImovel(${id})">
@@ -260,9 +261,12 @@ function renderizarFinanceiro(imoveis) {
     const imoveisAlugados = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) === 'Alugado');
 
     if (imoveisAlugados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">
-            Nenhum fluxo de caixa ativo. Alugue um imóvel para começar.
-        </td></tr>`;
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center; padding:30px; color:#64748b;">
+                    Nenhum fluxo de caixa ativo. Alugue um imóvel para começar.
+                </td>
+            </tr>`;
         return;
     }
 
@@ -310,7 +314,6 @@ function renderizarFinanceiro(imoveis) {
 // ==========================================
 window.abrirModalAlugar = function (imovelId, titulo) {
     document.getElementById('alugar-imovel-id').value = imovelId;
-    // Mostra o título no modal
     const h2 = document.querySelector('#modal-alugar .modal-header h2');
     if (h2) h2.innerHTML = `<i class="fa-solid fa-handshake text-success"></i> Alugar: ${titulo}`;
     openModal('modal-alugar');
@@ -377,7 +380,6 @@ window.pagarMensalidade = async function (imovelId) {
 window.desocuparImovel = async function (imovelId) {
     if (!confirm("Tem certeza que deseja desocupar este imóvel? O inquilino será desvinculado.")) return;
 
-    // Atualiza localmente enquanto aguarda API
     todosImoveis = todosImoveis.map(i => {
         if ((i.id ?? i.Id) === imovelId) {
             return { ...i, statusImovel: 'Vago', StatusImovel: 'Vago', inquilinoId: null, InquilinoId: null, statusPagamento: null };
@@ -386,7 +388,7 @@ window.desocuparImovel = async function (imovelId) {
     });
     resetVisuals();
 
-    // TODO: Adicione endpoint PUT /imoveis/{id}/desocupar na sua API C# quando precisar persistir
+    // TODO: Adicione endpoint PUT /imoveis/{id}/desocupar na API C# para persistir
 };
 
 // ==========================================
@@ -430,7 +432,6 @@ window.gerarRecibo = function (imovelId, titulo, preco) {
 // ==========================================
 async function cadastrarNovoImovel(e) {
     e.preventDefault();
-    anuncianteId: usuarioId,
 
     const usuarioIdRaw = sessionStorage.getItem('usuarioId') || localStorage.getItem('usuarioId');
     if (!usuarioIdRaw) {
@@ -452,6 +453,7 @@ async function cadastrarNovoImovel(e) {
         tipo: document.getElementById('type')?.value || "Casa",
         imagem: fotoBase64,
         usuarioId: parseInt(usuarioIdRaw),
+        anuncianteId: parseInt(usuarioIdRaw),
         logradouro: "Endereço registrado",
         numero: "S/N",
         bairro: "Bairro",
@@ -523,10 +525,7 @@ function popularDadosUsuario() {
 // INICIALIZAÇÃO
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-    // Popula nome e avatar do usuário
     popularDadosUsuario();
-
-    // Carrega imóveis do banco
     carregarImoveisDoBanco();
 
     // Vincula formulário de cadastro
