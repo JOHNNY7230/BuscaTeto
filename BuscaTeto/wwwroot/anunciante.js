@@ -1,11 +1,54 @@
 ﻿// ==========================================
-// VARIÁVEL GLOBAL PARA OS FILTROS
+// ESTADO GLOBAL DA APLICAÇÃO
 // ==========================================
 let todosImoveis = [];
+let filtroAtual = 'todos'; // 'todos', 'alugados', 'vagos'
 
 // ==========================================
-// FUNÇÕES DE UTILIDADE
+// CONTROLE DE NAVEGAÇÃO (ABAS)
 // ==========================================
+window.switchTab = function (tabName, btnElement) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    const targetTab = document.getElementById(`tab-${tabName}`);
+    if (targetTab) targetTab.classList.add('active');
+
+    if (btnElement) {
+        btnElement.classList.add('active');
+    }
+
+    // Ao entrar nas abas, renderiza os dados atuais
+    if (tabName === 'controle') renderizarControle(todosImoveis);
+    if (tabName === 'financeiro') renderizarFinanceiro(todosImoveis);
+    if (tabName === 'imoveis') renderizarCards(todosImoveis);
+    if (tabName === 'dashboard') atualizarDashboard(todosImoveis);
+};
+
+// ==========================================
+// UTILITÁRIOS E MODAIS
+// ==========================================
+window.openModal = function (id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'flex';
+};
+
+window.closeModal = function (id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
+};
+
+// Dropdown do usuário
+window.toggleUserMenu = function () {
+    document.getElementById('user-menu').classList.toggle('active');
+};
+window.addEventListener('click', function (e) {
+    if (!e.target.matches('.avatar')) {
+        const menu = document.getElementById('user-menu');
+        if (menu) menu.classList.remove('active');
+    }
+});
+
 function lerFoto(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -15,30 +58,45 @@ function lerFoto(file) {
     });
 }
 
+function resetVisuals() {
+    atualizarDashboard(todosImoveis);
+    renderizarCards(todosImoveis);
+    renderizarControle(todosImoveis);
+    renderizarFinanceiro(todosImoveis);
+}
+
 // ==========================================
-// FUNÇÃO PARA BUSCAR OS DADOS DO BANCO
+// BUSCAR DADOS DA API (C#)
 // ==========================================
 async function carregarImoveisDoBanco() {
     try {
-        const usuarioId = sessionStorage.getItem('usuarioId') || "1";
+        const usuarioIdRaw = sessionStorage.getItem('usuarioId') || localStorage.getItem('usuarioId');
+
+        if (!usuarioIdRaw) {
+            console.warn("Nenhum usuário logado detectado.");
+            return;
+        }
 
         const response = await fetch('/imoveis');
+        if (!response.ok) throw new Error("Erro ao buscar dados do servidor.");
+
         const data = await response.json();
+        console.log("Dados brutos carregados da API:", data);
 
-        todosImoveis = data.filter(imovel => imovel.usuarioId == usuarioId);
+        todosImoveis = data.filter(imovel => {
+            const imovelUser = imovel.usuarioId ?? imovel.UsuarioId;
+            return String(imovelUser) === String(usuarioIdRaw);
+        });
 
-        atualizarDashboard(todosImoveis);
-        renderizarCards(todosImoveis);
-        renderizarControle(todosImoveis); // NOVA ABA INJETADA AQUI
-        renderizarFinanceiro(todosImoveis);
+        resetVisuals();
 
     } catch (error) {
-        console.error("Erro ao carregar os imóveis:", error);
+        console.error("❌ Falha na comunicação com a API:", error);
     }
 }
 
 // ==========================================
-// DASHBOARD (Visão Geral)
+// DASHBOARD: INDICADORES EM TEMPO REAL
 // ==========================================
 function atualizarDashboard(imoveis) {
     let receitaTotal = 0;
@@ -46,367 +104,463 @@ function atualizarDashboard(imoveis) {
     let alugados = 0;
 
     imoveis.forEach(imovel => {
-        if (imovel.statusImovel === 'Alugado') {
-            receitaTotal += imovel.preco;
-            alugados++;
+        const statusImovel = imovel.statusImovel ?? imovel.StatusImovel;
+        const statusPagamento = imovel.statusPagamento ?? imovel.StatusPagamento;
+        const preco = imovel.preco ?? imovel.Preco ?? 0;
 
-            if (imovel.statusPagamento === 'Pendente' || imovel.statusPagamento === 'Atrasado') {
-                pendentes++;
-            }
+        if (statusImovel === 'Alugado') {
+            receitaTotal += preco;
+            alugados++;
+            if (statusPagamento !== 'Pago') pendentes++;
         }
     });
 
-    document.getElementById('dash-total').innerText = imoveis.length;
-    document.getElementById('dash-alugados').innerText = alugados;
-    document.getElementById('dash-pendentes').innerText = pendentes;
-    document.getElementById('dash-receita').innerText = `R$ ${receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const el = id => document.getElementById(id);
+    if (el('dash-total')) el('dash-total').innerText = imoveis.length;
+    if (el('dash-alugados')) el('dash-alugados').innerText = alugados;
+    if (el('dash-pendentes')) el('dash-pendentes').innerText = pendentes;
+    if (el('dash-receita')) {
+        el('dash-receita').innerText = `R$ ${receitaTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    }
 }
 
 // ==========================================
-// ABA: CONTROLAR IMÓVEIS (MINIMALISTA)
+// RENDERIZADOR: CARDS DE IMÓVEIS (ABA MEUS IMÓVEIS)
+// ==========================================
+function renderizarCards(imoveis) {
+    const container = document.getElementById('property-list');
+    if (!container) return;
+
+    let lista = imoveis;
+    if (filtroAtual === 'alugados') lista = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) === 'Alugado');
+    if (filtroAtual === 'vagos') lista = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) !== 'Alugado');
+
+    if (lista.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:#64748b;">
+                <i class="fa-solid fa-house-circle-xmark" style="font-size:2.5rem; margin-bottom:12px; display:block; opacity:0.4;"></i>
+                <p>Nenhum imóvel encontrado nesta categoria.</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = lista.map(imovel => {
+        const id = imovel.id ?? imovel.Id;
+        const titulo = imovel.titulo ?? imovel.Titulo ?? 'Sem título';
+        const cidade = imovel.cidade ?? imovel.Cidade ?? '';
+        const logradouro = imovel.logradouro ?? imovel.Logradouro ?? '';
+        const preco = imovel.preco ?? imovel.Preco ?? 0;
+        const tipo = imovel.tipo ?? imovel.Tipo ?? 'Imóvel';
+        const imagem = imovel.imagem ?? imovel.Imagem ?? 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80';
+        const status = imovel.statusImovel ?? imovel.StatusImovel ?? 'Vago';
+        const isAlugado = status === 'Alugado';
+
+        const imgSrc = imagem && imagem.startsWith('data:') ? imagem : (imagem || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80');
+
+        return `
+        <div class="property-card">
+            <div class="property-img">
+                <img src="${imgSrc}" alt="${titulo}" onerror="this.src='https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'">
+                <span class="status-badge ${isAlugado ? 'badge-alugado' : 'badge-vago'}">${isAlugado ? 'Alugado' : 'Vago'}</span>
+            </div>
+            <div class="property-info">
+                <div class="type-badge"><i class="fa-solid fa-house"></i> ${tipo}</div>
+                <h3>${titulo}</h3>
+                <p class="address"><i class="fa-solid fa-location-dot"></i> ${logradouro ? logradouro + ', ' : ''}${cidade}</p>
+                <div class="price-row">
+                    <span class="price">R$ ${Number(preco).toLocaleString('pt-BR')}<span>/mês</span></span>
+                    <button class="btn-icon" title="Remover imóvel" onclick="removerImovel(${id})">
+                        <i class="fa-solid fa-trash" style="color:#e74c3c;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ==========================================
+// RENDERIZADOR: ABA CONTROLAR IMÓVEIS
 // ==========================================
 function renderizarControle(imoveis) {
     const listaVagos = document.getElementById('lista-vagos');
     const listaAlugados = document.getElementById('lista-alugados');
-
     if (!listaVagos || !listaAlugados) return;
 
-    listaVagos.innerHTML = '';
-    listaAlugados.innerHTML = '';
+    const vagos = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) !== 'Alugado');
+    const alugados = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) === 'Alugado');
 
-    const vagos = imoveis.filter(i => i.statusImovel !== 'Alugado');
-    const alugados = imoveis.filter(i => i.statusImovel === 'Alugado');
-
+    // Renderiza os vagos (disponíveis para alugar)
     if (vagos.length === 0) {
-        listaVagos.innerHTML = '<p style="color: #64748b; font-size: 0.9rem; padding: 10px;">Não há imóveis disponíveis no momento.</p>';
+        listaVagos.innerHTML = `<p style="color:#64748b; padding:16px 0; font-size:0.9rem;">Todos os seus imóveis estão alugados.</p>`;
     } else {
-        vagos.forEach(imovel => {
-            listaVagos.innerHTML += `
-                <div class="minimal-item">
-                    <div class="minimal-info">
-                        <h4>${imovel.titulo}</h4>
-                        <p><i class="fa-solid fa-location-dot"></i> ${imovel.cidade || 'Não informado'}</p>
-                    </div>
-                    <div>
-                        <button class="btn-primary" onclick="prepararAluguel(${imovel.id})" style="padding: 8px 16px; font-size: 0.9rem;">
-                            <i class="fa-solid fa-handshake"></i> Definir Inquilino
-                        </button>
-                    </div>
+        listaVagos.innerHTML = vagos.map(imovel => {
+            const id = imovel.id ?? imovel.Id;
+            const titulo = imovel.titulo ?? imovel.Titulo ?? 'Sem título';
+            const cidade = imovel.cidade ?? imovel.Cidade ?? '';
+            const preco = imovel.preco ?? imovel.Preco ?? 0;
+            return `
+            <div class="minimal-item">
+                <div class="minimal-item-info">
+                    <strong>${titulo}</strong>
+                    <span>${cidade} · R$ ${Number(preco).toLocaleString('pt-BR')}/mês</span>
                 </div>
-            `;
-        });
+                <button class="btn-success btn-sm" onclick="abrirModalAlugar(${id}, '${titulo.replace(/'/g, "\\'")}')">
+                    <i class="fa-solid fa-handshake"></i> Alugar
+                </button>
+            </div>`;
+        }).join('');
     }
 
+    // Renderiza os alugados (com opção de desocupar)
     if (alugados.length === 0) {
-        listaAlugados.innerHTML = '<p style="color: #64748b; font-size: 0.9rem; padding: 10px;">Você ainda não tem imóveis alugados.</p>';
+        listaAlugados.innerHTML = `<p style="color:#64748b; padding:16px 0; font-size:0.9rem;">Nenhum imóvel alugado no momento.</p>`;
     } else {
-        alugados.forEach(imovel => {
-            listaAlugados.innerHTML += `
-                <div class="minimal-item">
-                    <div class="minimal-info">
-                        <h4>${imovel.titulo}</h4>
-                        <p><i class="fa-solid fa-location-dot"></i> ${imovel.cidade || 'Não informado'}</p>
-                    </div>
-                    <div class="minimal-tenant">
-                        <i class="fa-solid fa-user-check"></i> Inquilino ID: ${imovel.inquilinoId || 'N/A'}
-                    </div>
+        listaAlugados.innerHTML = alugados.map(imovel => {
+            const id = imovel.id ?? imovel.Id;
+            const titulo = imovel.titulo ?? imovel.Titulo ?? 'Sem título';
+            const cidade = imovel.cidade ?? imovel.Cidade ?? '';
+            const preco = imovel.preco ?? imovel.Preco ?? 0;
+            const inquilinoId = imovel.inquilinoId ?? imovel.InquilinoId ?? 'N/A';
+            const statusPag = imovel.statusPagamento ?? imovel.StatusPagamento ?? 'Pendente';
+            const isPago = statusPag === 'Pago';
+
+            return `
+            <div class="minimal-item">
+                <div class="minimal-item-info">
+                    <strong>${titulo}</strong>
+                    <span>
+                        ${cidade} · R$ ${Number(preco).toLocaleString('pt-BR')}/mês · 
+                        Inquilino ID: ${inquilinoId} · 
+                        <span style="color:${isPago ? '#2ecc71' : '#e67e22'}; font-weight:600;">
+                            ${isPago ? '✓ Pago' : '⏳ Pendente'}
+                        </span>
+                    </span>
                 </div>
-            `;
-        });
+                <div style="display:flex; gap:8px;">
+                    ${!isPago ? `<button class="btn-primary btn-sm" onclick="pagarMensalidade(${id})">
+                        <i class="fa-solid fa-check"></i> Confirmar Pagamento
+                    </button>` : ''}
+                    <button class="btn-danger btn-sm" onclick="desocuparImovel(${id})">
+                        <i class="fa-solid fa-door-open"></i> Desocupar
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
     }
 }
-// ==========================================
-// GRID DE IMÓVEIS (Aba: Meus Imóveis - Blindada)
-// ==========================================
-function renderizarCards(imoveisParaRenderizar) {
-    const grid = document.getElementById('property-list');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    if (imoveisParaRenderizar.length === 0) {
-        grid.innerHTML = '<p style="color: #64748b; padding: 20px;">Nenhum imóvel encontrado.</p>';
-        return;
-    }
-
-    imoveisParaRenderizar.forEach(imovel => {
-        // Defesa de propriedades maiúsculas/minúsculas vindo do C#
-        const idOriginal = imovel.id || imovel.Id;
-        const statusImovel = imovel.statusImovel || imovel.StatusImovel;
-        const titulo = imovel.titulo || imovel.Titulo;
-        const cidade = imovel.cidade || imovel.Cidade || 'Não informado';
-        const preco = imovel.preco || imovel.Preco || 0;
-        const tipo = imovel.tipo || imovel.Tipo || 'Imóvel';
-        const imagem = imovel.imagem || imovel.Imagem;
-
-        const isAlugado = statusImovel === 'Alugado';
-        const statusClass = isAlugado ? 'badge-alugado' : 'badge-vago';
-        const statusText = isAlugado ? 'Alugado' : 'Vago';
-
-        const foto = imagem || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
-        const tipoIcone = tipo === 'Apartamento' ? 'fa-building' : 'fa-house';
-
-        grid.innerHTML += `
-            <div class="property-card">
-                <div class="property-img clickable-img" onclick="abrirDetalhes(${idOriginal})" title="Clique para ver detalhes" style="cursor: pointer;">
-                    <img src="${foto}" alt="${titulo}">
-                    <span class="status-badge ${statusClass}">${statusText}</span>
-                </div>
-                <div class="property-info">
-                    <div class="type-badge"><i class="fa-solid ${tipoIcone}"></i> ${tipo}</div>
-                    <h3>${titulo}</h3>
-                    <p class="address"><i class="fa-solid fa-location-dot"></i> ${cidade}</p>
-                    <div class="price-row">
-                        <span class="price">R$ ${preco.toFixed(2)}<span>/mês</span></span>
-                        <button class="btn-icon" title="Configurações"><i class="fa-solid fa-gear"></i></button>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-}
 
 // ==========================================
-// FUNÇÃO: ABRIR DETALHES DO IMÓVEL (Blindada + WhatsApp)
-// ==========================================
-function abrirDetalhes(id) {
-    // Procura aceitando tanto i.id quanto i.Id
-    const imovel = todosImoveis.find(i => (i.id == id || i.Id == id));
-    if (!imovel) {
-        console.error("Mapeamento falhou para o ID:", id);
-        return;
-    }
-
-    // Mapeamento seguro das variáveis
-    const titulo = imovel.titulo || imovel.Titulo || "Sem título";
-    const imagem = imovel.imagem || imovel.Imagem || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80';
-    const preco = imovel.preco || imovel.Preco || 0;
-    const descricao = imovel.descricao || imovel.Descricao || "Casa com excelente iluminação natural, ambientes amplos e bem ventilados. Ótima localização próxima a comércios.";
-    const logradouro = imovel.logradouro || imovel.Logradouro || "Não informado";
-    const numero = imovel.numero || imovel.Numero || "S/N";
-    const bairro = imovel.bairro || imovel.Bairro || "Centro";
-    const cidade = imovel.cidade || imovel.Cidade || "Belo Horizonte";
-    const cep = imovel.cep || imovel.Cep || "00000-000";
-    const quartos = imovel.quartos || imovel.Quartos || 3;
-
-    // Injeta os dados corrigidos no Modal
-    document.getElementById('detalhe-imagem').src = imagem;
-    document.getElementById('detalhe-titulo').innerText = titulo;
-    document.getElementById('detalhe-preco-tag').innerText = `R$ ${preco.toFixed(2)}`;
-    document.getElementById('detalhe-descricao').innerText = descricao;
-    document.getElementById('detalhe-endereco').innerText = `${logradouro}, ${numero} - ${bairro}, ${cidade}`;
-    document.getElementById('detalhe-cep').innerText = cep;
-    document.getElementById('detalhe-quartos').innerText = `${quartos} Quarto(s)`;
-    document.getElementById('detalhe-area').innerText = imovel.area || imovel.Area ? `${imovel.area || imovel.Area} m²` : '120 m²';
-
-    // CONFIGURAÇÃO DINÂMICA DO LINK DO WHATSAPP
-    const mensagemWhats = encodeURIComponent(`Olá! Vi o anúncio do imóvel "${titulo}" no BuscaTeto e gostaria de mais informações.`);
-    // Coloquei um número de exemplo do DDD 31, altere para o número real se quiser testar!
-    document.getElementById('detalhe-whatsapp').href = `https://wa.me/5531999999999?text=${mensagemWhats}`;
-
-    openModal('modal-detalhes');
-}
-// ==========================================
-// TABELA FINANCEIRA
+// RENDERIZADOR: TABELA FINANCEIRO
 // ==========================================
 function renderizarFinanceiro(imoveis) {
     const tbody = document.getElementById('tabela-financeiro-corpo');
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const imoveisAlugados = imoveis.filter(i => i.statusImovel === 'Alugado');
+    const imoveisAlugados = imoveis.filter(i => (i.statusImovel ?? i.StatusImovel) === 'Alugado');
 
     if (imoveisAlugados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">Nenhum imóvel alugado no momento.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">
+            Nenhum fluxo de caixa ativo. Alugue um imóvel para começar.
+        </td></tr>`;
         return;
     }
 
     imoveisAlugados.forEach(imovel => {
-        const isPago = imovel.statusPagamento === 'Pago';
-
-        const tagStatus = isPago
-            ? `<span class="tag tag-pago"><i class="fa-solid fa-check"></i> Pago</span>`
-            : `<span class="tag tag-pendente"><i class="fa-regular fa-clock"></i> ${imovel.statusPagamento || 'Pendente'}</span>`;
-
-        const btnAcao = isPago
-            ? `<button class="btn-action btn-view"><i class="fa-solid fa-file-invoice"></i> Ver Recibo</button>`
-            : `<button class="btn-action btn-cobrar" onclick="alert('Cobrança enviada com sucesso!')"><i class="fa-regular fa-bell"></i> Enviar Cobrança</button>`;
+        const id = imovel.id ?? imovel.Id;
+        const inquilinoId = imovel.inquilinoId ?? imovel.InquilinoId ?? 'N/A';
+        const titulo = imovel.titulo ?? imovel.Titulo ?? '';
+        const cidade = imovel.cidade ?? imovel.Cidade ?? '';
+        const preco = imovel.preco ?? imovel.Preco ?? 0;
+        const diaVenc = imovel.diaVencimento ?? imovel.DiaVencimento ?? '10';
+        const statusPag = imovel.statusPagamento ?? imovel.StatusPagamento ?? 'Pendente';
+        const isPago = statusPag === 'Pago';
 
         tbody.innerHTML += `
-            <tr>
-                <td><div class="table-imovel-info"><strong>${imovel.titulo}</strong><span class="text-muted">${imovel.cidade}</span></div></td>
-                <td><div class="inquilino-info"><i class="fa-solid fa-user-check"></i> ID: ${imovel.inquilinoId || 'N/A'}</div></td>
-                <td><span class="vencimento-tag">Todo dia ${imovel.diaVencimento || '10'}</span></td>
-                <td><strong>R$ ${imovel.preco ? imovel.preco.toFixed(2) : '0.00'}</strong></td>
-                <td>${tagStatus}</td>
-                <td>${btnAcao}</td>
-            </tr>
-        `;
+        <tr>
+            <td>
+                <strong>${titulo}</strong><br>
+                <small style="color:#7f8c8d">${cidade}</small>
+            </td>
+            <td>ID: ${inquilinoId}</td>
+            <td>Dia ${diaVenc}</td>
+            <td><strong>R$ ${Number(preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></td>
+            <td>
+                ${isPago
+                ? `<span style="color:#2ecc71; font-weight:700; background:#f0fdf4; padding:4px 10px; border-radius:20px; font-size:0.85rem;">✓ Pago</span>`
+                : `<span style="color:#e67e22; font-weight:700; background:#fff7ed; padding:4px 10px; border-radius:20px; font-size:0.85rem;">⏳ Pendente</span>`
+            }
+            </td>
+            <td>
+                ${isPago
+                ? `<button class="btn-secondary btn-sm" onclick="gerarRecibo(${id}, '${titulo.replace(/'/g, "\\'")}', ${preco})">
+                            <i class="fa-solid fa-receipt"></i> Recibo
+                       </button>`
+                : `<button class="btn-primary btn-sm" onclick="pagarMensalidade(${id})">
+                            <i class="fa-solid fa-check"></i> Confirmar Pag.
+                       </button>`
+            }
+            </td>
+        </tr>`;
     });
 }
 
 // ==========================================
-// FUNÇÕES DE AÇÃO DOS MODAIS
+// AÇÕES: ALUGAR IMÓVEL
 // ==========================================
-unction prepararAluguel(imovelId) {
+window.abrirModalAlugar = function (imovelId, titulo) {
     document.getElementById('alugar-imovel-id').value = imovelId;
+    // Mostra o título no modal
+    const h2 = document.querySelector('#modal-alugar .modal-header h2');
+    if (h2) h2.innerHTML = `<i class="fa-solid fa-handshake text-success"></i> Alugar: ${titulo}`;
     openModal('modal-alugar');
+};
+
+async function confirmarAluguel(e) {
+    e.preventDefault();
+
+    const imovelId = document.getElementById('alugar-imovel-id').value;
+    const inquilinoId = parseInt(document.getElementById('inquilino-id').value);
+    const diaVencimento = parseInt(document.getElementById('dia-vencimento').value);
+
+    if (!imovelId || !inquilinoId || !diaVencimento) {
+        alert("Preencha todos os campos.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/imoveis/${imovelId}/alugar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inquilinoId, diaVencimento })
+        });
+
+        if (response.ok) {
+            closeModal('modal-alugar');
+            document.getElementById('alugar-form').reset();
+            alert("✅ Contrato registrado com sucesso!");
+            await carregarImoveisDoBanco();
+        } else {
+            const erro = await response.text();
+            alert(`❌ Erro ao registrar aluguel (${response.status}): ${erro}`);
+        }
+    } catch (error) {
+        console.error("Erro ao alugar:", error);
+        alert("❌ Falha na conexão com a API.");
+    }
 }
 
-// COLA A NOVA FUNÇÃO AQUI NESSE ESPAÇO:
 // ==========================================
+// AÇÕES: CONFIRMAR PAGAMENTO DE MENSALIDADE
 // ==========================================
-// FUNÇÃO: ABRIR DETALHES DO IMÓVEL
+window.pagarMensalidade = async function (imovelId) {
+    if (!confirm("Confirmar recebimento do pagamento deste mês?")) return;
+
+    try {
+        const response = await fetch(`/imoveis/${imovelId}/pagar`, { method: 'POST' });
+
+        if (response.ok) {
+            alert("✅ Pagamento registrado com sucesso!");
+            await carregarImoveisDoBanco();
+        } else {
+            alert(`❌ Erro ao registrar pagamento (${response.status})`);
+        }
+    } catch (error) {
+        console.error("Erro ao pagar:", error);
+        alert("❌ Falha na conexão com a API.");
+    }
+};
+
 // ==========================================
-function abrirDetalhes(id) {
-    const imovel = todosImoveis.find(i => i.id === id);
-    if (!imovel) return;
-
-    document.getElementById('detalhe-imagem').src = imovel.imagem || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80';
-    document.getElementById('detalhe-titulo').innerText = imovel.titulo;
-    document.getElementById('detalhe-preco-tag').innerText = `R$ ${imovel.preco ? imovel.preco.toFixed(2) : '0.00'}`;
-
-    // Tratamento da descrição
-    document.getElementById('detalhe-descricao').innerText = imovel.descricao && imovel.descricao !== "Descrição padrão"
-        ? imovel.descricao
-        : "Casa com excelente iluminação natural, ambientes amplos e bem ventilados. Ótima localização próxima a comércios e vias de acesso fácil.";
-
-    // Tratamento do endereço
-    const endereco = `${imovel.logradouro || 'Rua não informada'}, ${imovel.numero || 'S/N'} - ${imovel.bairro || 'Bairro não informado'}, ${imovel.cidade || 'Cidade não informada'}`;
-    document.getElementById('detalhe-endereco').innerText = endereco;
-
-    // Especificações e Metros²
-    document.getElementById('detalhe-cep').innerText = imovel.cep || 'CEP não informado';
-    document.getElementById('detalhe-quartos').innerText = imovel.quartos ? `${imovel.quartos} Quarto(s)` : '3 Quarto(s)';
-
-    // Colocando um valor padrão de m² para apresentação, já que não temos no C#
-    document.getElementById('detalhe-area').innerText = imovel.area ? `${imovel.area} m²` : '120 m²';
-
-    openModal('modal-detalhes');
-}// ==========================================
-// EVENTOS QUANDO A PÁGINA CARREGA
+// AÇÕES: DESOCUPAR IMÓVEL
 // ==========================================
-window.addEventListener('load', () => {
+window.desocuparImovel = async function (imovelId) {
+    if (!confirm("Tem certeza que deseja desocupar este imóvel? O inquilino será desvinculado.")) return;
 
+    // Atualiza localmente enquanto aguarda API
+    todosImoveis = todosImoveis.map(i => {
+        if ((i.id ?? i.Id) === imovelId) {
+            return { ...i, statusImovel: 'Vago', StatusImovel: 'Vago', inquilinoId: null, InquilinoId: null, statusPagamento: null };
+        }
+        return i;
+    });
+    resetVisuals();
+
+    // TODO: Adicione endpoint PUT /imoveis/{id}/desocupar na sua API C# quando precisar persistir
+};
+
+// ==========================================
+// AÇÕES: REMOVER IMÓVEL
+// ==========================================
+window.removerImovel = async function (imovelId) {
+    if (!confirm("Tem certeza que deseja remover este imóvel permanentemente?")) return;
+
+    try {
+        const response = await fetch(`/imoveis/${imovelId}`, { method: 'DELETE' });
+
+        if (response.ok) {
+            alert("✅ Imóvel removido com sucesso.");
+            await carregarImoveisDoBanco();
+        } else {
+            alert(`❌ Erro ao remover imóvel (${response.status})`);
+        }
+    } catch (error) {
+        console.error("Erro ao remover:", error);
+        alert("❌ Falha na conexão com a API.");
+    }
+};
+
+// ==========================================
+// AÇÕES: GERAR RECIBO (FINANCEIRO)
+// ==========================================
+window.gerarRecibo = function (imovelId, titulo, preco) {
+    const data = new Date().toLocaleDateString('pt-BR');
+    const texto = `===== RECIBO DE ALUGUEL =====\nImóvel: ${titulo}\nValor: R$ ${Number(preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\nData: ${data}\nStatus: PAGO\n=============================`;
+    const blob = new Blob([texto], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recibo_${titulo.replace(/\s+/g, '_')}_${data.replace(/\//g, '-')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+// ==========================================
+// AÇÕES: CADASTRAR NOVO IMÓVEL
+// ==========================================
+async function cadastrarNovoImovel(e) {
+    e.preventDefault();
+    anuncianteId: usuarioId,
+
+    const usuarioIdRaw = sessionStorage.getItem('usuarioId') || localStorage.getItem('usuarioId');
+    if (!usuarioIdRaw) {
+        alert("❌ Sessão expirada. Faça login novamente.");
+        return;
+    }
+
+    const fileInput = document.getElementById('imageInput');
+    let fotoBase64 = "";
+    if (fileInput && fileInput.files.length > 0) {
+        fotoBase64 = await lerFoto(fileInput.files[0]);
+    }
+
+    const payload = {
+        titulo: document.getElementById('title').value,
+        descricao: "Cadastrado via Portal do Anunciante",
+        preco: parseFloat(document.getElementById('price').value || "0"),
+        quartos: 1,
+        tipo: document.getElementById('type')?.value || "Casa",
+        imagem: fotoBase64,
+        usuarioId: parseInt(usuarioIdRaw),
+        logradouro: "Endereço registrado",
+        numero: "S/N",
+        bairro: "Bairro",
+        cidade: document.getElementById('address').value,
+        cep: "00000-000"
+    };
+
+    try {
+        const response = await fetch('/imoveis', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("✅ Imóvel cadastrado com sucesso!");
+            document.getElementById('add-form').reset();
+            closeModal('modal-add');
+            await carregarImoveisDoBanco();
+        } else {
+            const erro = await response.text();
+            alert(`❌ Erro ${response.status}: ${erro}`);
+        }
+    } catch (error) {
+        console.error("Erro ao cadastrar:", error);
+        alert("❌ Falha na conexão com a API.");
+    }
+}
+
+// ==========================================
+// FILTRO DOS CHIPS (ABA MEUS IMÓVEIS)
+// ==========================================
+function configurarFiltros() {
+    const chips = document.querySelectorAll('.filter-chips .chip');
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            chips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            const texto = chip.textContent.trim().toLowerCase();
+            if (texto === 'todos') filtroAtual = 'todos';
+            else if (texto === 'alugados') filtroAtual = 'alugados';
+            else if (texto === 'vagos') filtroAtual = 'vagos';
+            renderizarCards(todosImoveis);
+        });
+    });
+}
+
+// ==========================================
+// POPULA DADOS DO USUÁRIO LOGADO NA NAVBAR
+// ==========================================
+function popularDadosUsuario() {
+    const nome = sessionStorage.getItem('usuarioNome') || localStorage.getItem('usuarioNome') || 'Anunciante';
+    const primeiroNome = nome.split(' ')[0];
+
+    const saudacao = document.getElementById('saudacao');
+    if (saudacao) saudacao.textContent = `Olá, ${primeiroNome}! 👋`;
+
+    const dropdownNome = document.getElementById('dropdown-nome');
+    if (dropdownNome) dropdownNome.textContent = nome;
+
+    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0D8ABC&color=fff&rounded=true`;
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarDropdown = document.getElementById('avatar-img-dropdown');
+    if (avatarImg) avatarImg.src = avatarUrl;
+    if (avatarDropdown) avatarDropdown.src = avatarUrl;
+}
+
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
+window.addEventListener('DOMContentLoaded', () => {
+    // Popula nome e avatar do usuário
+    popularDadosUsuario();
+
+    // Carrega imóveis do banco
     carregarImoveisDoBanco();
 
-    // Lógica dos filtros (Todos, Alugados, Vagos) na vitrine
-    const chips = document.querySelectorAll('.chip');
-    chips.forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            chips.forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-
-            const filtro = e.target.innerText;
-            if (filtro === 'Todos') {
-                renderizarCards(todosImoveis);
-            } else if (filtro === 'Alugados') {
-                renderizarCards(todosImoveis.filter(i => i.statusImovel === 'Alugado'));
-            } else if (filtro === 'Vagos') {
-                renderizarCards(todosImoveis.filter(i => i.statusImovel !== 'Alugado'));
-            }
-        });
-    });
-
-    const imageInput = document.getElementById('imageInput');
-    if (imageInput) {
-        imageInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                const labelBox = e.target.parentElement.querySelector('span');
-                if (labelBox) labelBox.innerText = e.target.files[0].name;
-            }
-        });
-    }
-
-    // ==========================================
-    // ENVIO: CADASTRAR NOVO IMÓVEL
-    // ==========================================
+    // Vincula formulário de cadastro
     const addForm = document.getElementById('add-form');
     if (addForm) {
-        addForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const fileInput = document.getElementById('imageInput');
-            let fotoBase64 = "";
-
-            if (fileInput.files.length > 0) {
-                fotoBase64 = await lerFoto(fileInput.files[0]);
-            }
-
-            const novoImovel = {
-                titulo: document.getElementById('title').value,
-                descricao: "Descrição padrão",
-                preco: parseFloat(document.getElementById('price').value || "0"),
-                quartos: 0,
-                tipo: document.getElementById('type').value,
-                imagem: fotoBase64,
-                usuarioId: sessionStorage.getItem('usuarioId') || "1",
-                logradouro: "Não informado",
-                numero: "S/N",
-                bairro: "Centro",
-                cidade: document.getElementById('address').value,
-                cep: "00000-000"
-            };
-
-            try {
-                const response = await fetch('/imoveis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(novoImovel)
-                });
-
-                if (response.ok) {
-                    alert("✅ Imóvel cadastrado com sucesso!");
-                    carregarImoveisDoBanco();
-                    closeModal('modal-add');
-                    addForm.reset();
-                    const labelBox = fileInput.parentElement.querySelector('span');
-                    if (labelBox) labelBox.innerText = "Clique ou arraste uma foto aqui";
-                } else {
-                    const erroTexto = await response.text();
-                    alert("❌ Erro do servidor: " + erroTexto);
-                }
-            } catch (error) {
-                alert("❌ Erro de conexão com a API.");
-            }
-        });
+        addForm.removeAttribute('onsubmit');
+        addForm.addEventListener('submit', cadastrarNovoImovel);
     }
 
-    // ==========================================
-    // ENVIO: INFORMAR ALUGUEL (Rota PUT do C#)
-    // ==========================================
+    // Vincula formulário de aluguel
     const alugarForm = document.getElementById('alugar-form');
     if (alugarForm) {
-        alugarForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const imovelId = document.getElementById('alugar-imovel-id').value;
-            const inquilinoId = parseInt(document.getElementById('inquilino-id').value);
-            const diaVencimento = parseInt(document.getElementById('dia-vencimento').value);
-
-            const payload = {
-                inquilinoId: inquilinoId,
-                diaVencimento: diaVencimento
-            };
-
-            try {
-                const response = await fetch(`/imoveis/${imovelId}/alugar`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    alert("✅ Contrato ativado! O imóvel já está no seu controle financeiro.");
-                    carregarImoveisDoBanco();
-                    closeModal('modal-alugar');
-                    alugarForm.reset();
-                } else {
-                    const erroTexto = await response.text();
-                    alert("❌ Erro ao vincular inquilino: " + erroTexto);
-                }
-            } catch (error) {
-                alert("❌ Erro de conexão com a API.");
-            }
-        });
+        alugarForm.removeAttribute('onsubmit');
+        alugarForm.addEventListener('submit', confirmarAluguel);
     }
+
+    // Configura filtros
+    configurarFiltros();
+
+    // Corrige os botões de aba para passar o elemento clicado
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        const onclickAttr = btn.getAttribute('onclick');
+        if (onclickAttr) {
+            btn.removeAttribute('onclick');
+            const match = onclickAttr.match(/switchTab\('(\w+)'\)/);
+            if (match) {
+                btn.addEventListener('click', function () {
+                    switchTab(match[1], this);
+                });
+            }
+        }
+    });
+
+    // Inicia na aba dashboard
+    const dashBtn = document.querySelector('.tab-btn');
+    if (dashBtn) dashBtn.classList.add('active');
 });

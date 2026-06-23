@@ -39,12 +39,14 @@ namespace BuscaTeto.Models
         public string? Imagem { get; set; }
 
         [Required]
-        public string UsuarioId { get; set; } // Vinculado ao Dono do Imóvel
+        public int UsuarioId { get; set; } // Vinculado ao Dono do Imóvel
+
+        public int AnuncianteId { get; set; } // Vinculado ao Anunciante
 
         // ==========================================================
         // RELACIONAMENTO COM ENDEREÇO (ADICIONE ESTE BLOCO AQUI!)
         // ==========================================================
-      
+
 
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
         public string StatusImovel { get; set; } = "Disponivel"; // Padrão é disponível

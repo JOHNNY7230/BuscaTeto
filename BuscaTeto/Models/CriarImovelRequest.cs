@@ -8,10 +8,8 @@
         public int Quartos { get; set; }
         public string Tipo { get; set; }
         public string Imagem { get; set; }
-
-        // 🔥 A MÁGICA ESTÁ AQUI: O C# agora sabe que o ID é um número inteiro!
-        public string UsuarioId { get; set; }
-
+        public int UsuarioId { get; set; }
+        public int AnuncianteId { get; set; }
         public string Logradouro { get; set; }
         public string Numero { get; set; }
         public string Bairro { get; set; }
